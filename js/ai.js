@@ -141,15 +141,11 @@ function calculateFreeHoursToday(){
     available += 1.15;
   }
 
-  if(currentHour < 14 + 50/60){
-    available += 1.15;
-  }
-
   if(currentHour < 22){
     available +=
       Math.max(
         0,
-        22 - Math.max(currentHour,16)
+        22 - Math.max(currentHour, 14 + 50/60)
       );
   }
 
@@ -290,6 +286,11 @@ function subtractBusyFromWindows(windows,busyStart,busyEnd){
   return updated;
 }
 
+/*
+  Bus ride and after school are now ONE continuous window.
+  That fixes breaks jumping to 4:00 instead of snapping after work.
+*/
+
 function getStudyWindowsForDate(date){
   const now = new Date();
 
@@ -307,13 +308,8 @@ function getStudyWindowsForDate(date){
     },
     {
       start:14 + 50/60,
-      end:16,
-      label:"Bus Work Block"
-    },
-    {
-      start:16,
       end:22,
-      label:"After School Work Block"
+      label:"Afternoon Work Block"
     }
   ];
 
@@ -411,8 +407,13 @@ function snapHour(hour){
 }
 
 /*
-  This version makes breaks attach directly after work,
-  and the next task attaches directly after the break.
+  Balanced smart planner:
+  - prioritizes due dates
+  - distributes work across days
+  - avoids scheduling before current time
+  - inserts required breaks
+  - snaps breaks directly after work when possible
+  - if break cannot fit, it places break in next open window
 */
 
 function generateSmartStudyPlan(){
@@ -421,7 +422,8 @@ function generateSmartStudyPlan(){
   const dailyLoad = {};
   const workSinceBreak = {};
 
-  const settings = getPlannerSettings();
+  const settings =
+    getPlannerSettings();
 
   const breakHours =
     settings.breakMinutes / 60;
@@ -524,26 +526,20 @@ function generateSmartStudyPlan(){
         a.score - b.score
       );
 
-      let chosen = null;
-
       /*
-        If a break is required, only choose a window
-        where the full break can fit.
+        If any day currently needs a break, place the break first.
       */
 
-      const breakNeededSomewhere =
+      const breakNeeded =
         candidates.some(candidate =>
           workSinceBreak[candidate.dateString] >= workLimit
         );
 
-      if(breakNeededSomewhere){
-        chosen =
+      if(breakNeeded){
+        const breakCandidate =
           candidates.find(candidate => {
-            const dateString =
-              candidate.dateString;
-
             if(
-              workSinceBreak[dateString] < workLimit
+              workSinceBreak[candidate.dateString] < workLimit
             ){
               return false;
             }
@@ -557,63 +553,49 @@ function generateSmartStudyPlan(){
             return end - start >= breakHours;
           });
 
-        /*
-          If a break is required but there is no room for it,
-          block the smallest unusable window so the planner
-          tries the next open space.
-        */
+        if(breakCandidate){
+          const dateString =
+            breakCandidate.dateString;
 
-        if(!chosen){
-          const blocked =
-            candidates[0];
+          if(!plan[dateString]){
+            plan[dateString] = [];
+          }
+
+          const breakStart =
+            snapHour(breakCandidate.window.start);
+
+          const breakEnd =
+            snapHour(breakStart + breakHours);
+
+          const breakSession = {
+            id:`break-${dateString}-${breakStart}`,
+            kind:"break",
+            title:"Break",
+            className:"Break",
+            type:"Break",
+            due:null,
+            start:breakStart,
+            end:breakEnd,
+            label:`${settings.breakMinutes} min break`
+          };
+
+          plan[dateString].push(breakSession);
 
           addUsedWindow(
             usedWindowsByDate,
-            blocked.dateString,
-            blocked.window.start,
-            blocked.window.end
+            dateString,
+            breakStart,
+            breakEnd
           );
+
+          workSinceBreak[dateString] = 0;
 
           continue;
         }
-
-        if(!plan[chosen.dateString]){
-          plan[chosen.dateString] = [];
-        }
-
-        const breakStart =
-          snapHour(chosen.window.start);
-
-        const breakEnd =
-          snapHour(breakStart + breakHours);
-
-        const breakSession = {
-          id:`break-${chosen.dateString}-${breakStart}`,
-          kind:"break",
-          title:"Break",
-          className:"Break",
-          type:"Break",
-          due:null,
-          start:breakStart,
-          end:breakEnd,
-          label:`${settings.breakMinutes} min break`
-        };
-
-        plan[chosen.dateString].push(breakSession);
-
-        addUsedWindow(
-          usedWindowsByDate,
-          chosen.dateString,
-          breakStart,
-          breakEnd
-        );
-
-        workSinceBreak[chosen.dateString] = 0;
-
-        continue;
       }
 
-      chosen = candidates[0];
+      const chosen =
+        candidates[0];
 
       const dateString =
         chosen.dateString;
@@ -705,10 +687,8 @@ function generateSmartStudyPlan(){
         Number(remainingHours.toFixed(2));
 
       /*
-        If a break fits immediately after the work block,
-        place it directly underneath.
-        If it does not fit, the next loop will place it in
-        the next available space.
+        If a break fits directly after this work block,
+        place it immediately.
       */
 
       if(
