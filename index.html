@@ -12,7 +12,7 @@
   --bg1:#0f172a;
   --bg2:#1e293b;
   --card:rgba(255,255,255,0.06);
-  --border:rgba(255,255,255,0.1);
+  --border:rgba(255,255,255,0.08);
   --text:white;
   --muted:rgba(255,255,255,0.6);
 }
@@ -33,28 +33,25 @@ body{
   );
 
   color:white;
-
-  min-height:100vh;
-
   overflow:hidden;
 }
 
-/* TOP BAR */
+/* TOPBAR */
 
 .topbar{
   height:80px;
-
-  border-bottom:
-  1px solid rgba(255,255,255,0.08);
 
   display:flex;
   justify-content:space-between;
   align-items:center;
 
-  padding:0 25px;
+  padding:0 24px;
+
+  border-bottom:
+  1px solid rgba(255,255,255,0.08);
 
   background:
-  rgba(15,23,42,0.75);
+  rgba(15,23,42,0.8);
 
   backdrop-filter:blur(20px);
 }
@@ -67,6 +64,7 @@ body{
 .subtitle{
   color:var(--muted);
   font-size:0.9rem;
+  margin-top:4px;
 }
 
 .today{
@@ -77,7 +75,7 @@ body{
 
 .main{
   display:grid;
-  grid-template-columns:350px 1fr;
+  grid-template-columns:360px 1fr;
 
   height:calc(100vh - 80px);
 }
@@ -85,12 +83,12 @@ body{
 /* SIDEBAR */
 
 .sidebar{
-  border-right:
-  1px solid rgba(255,255,255,0.08);
-
   overflow-y:auto;
 
   padding:20px;
+
+  border-right:
+  1px solid rgba(255,255,255,0.08);
 }
 
 .card{
@@ -114,7 +112,7 @@ body{
 .section-title{
   font-size:1.1rem;
   font-weight:700;
-  margin-bottom:15px;
+  margin-bottom:16px;
 }
 
 /* INPUTS */
@@ -125,16 +123,16 @@ select{
 
   padding:14px;
 
-  margin-bottom:12px;
-
   border:none;
 
   border-radius:16px;
 
-  background:
-  rgba(255,255,255,0.08);
+  margin-bottom:12px;
 
   color:white;
+
+  background:
+  rgba(255,255,255,0.08);
 
   font-size:0.95rem;
 }
@@ -158,6 +156,11 @@ select{
   cursor:pointer;
 
   font-weight:600;
+}
+
+option{
+  background:#0f172a;
+  color:white;
 }
 
 /* BUTTON */
@@ -191,7 +194,7 @@ button:hover{
   transform:scale(1.02);
 }
 
-/* WEEK AREA */
+/* WEEK VIEW */
 
 .week-container{
   overflow-x:auto;
@@ -229,8 +232,6 @@ button:hover{
   position:relative;
 }
 
-/* TODAY */
-
 .today-day{
   border:
   2px solid #8b5cf6;
@@ -246,18 +247,18 @@ button:hover{
   z-index:100;
 
   background:
-  rgba(15,23,42,0.95);
-
-  backdrop-filter:blur(20px);
+  rgba(15,23,42,0.96);
 
   padding:18px;
 
   border-bottom:
   1px solid rgba(255,255,255,0.08);
+
+  backdrop-filter:blur(20px);
 }
 
 .day-name{
-  font-size:1.2rem;
+  font-size:1.15rem;
   font-weight:700;
 }
 
@@ -272,7 +273,7 @@ button:hover{
   position:relative;
 }
 
-/* HOUR ROW */
+/* HOURS */
 
 .hour-row{
   height:80px;
@@ -334,8 +335,8 @@ button:hover{
   background:
   linear-gradient(
     135deg,
-    rgba(59,130,246,0.9),
-    rgba(99,102,241,0.9)
+    rgba(59,130,246,0.92),
+    rgba(99,102,241,0.92)
   );
 }
 
@@ -343,8 +344,8 @@ button:hover{
   background:
   linear-gradient(
     135deg,
-    rgba(16,185,129,0.9),
-    rgba(5,150,105,0.9)
+    rgba(16,185,129,0.92),
+    rgba(5,150,105,0.92)
   );
 }
 
@@ -352,8 +353,8 @@ button:hover{
   background:
   linear-gradient(
     135deg,
-    rgba(239,68,68,0.92),
-    rgba(220,38,38,0.92)
+    rgba(239,68,68,0.95),
+    rgba(220,38,38,0.95)
   );
 }
 
@@ -361,8 +362,8 @@ button:hover{
   background:
   linear-gradient(
     135deg,
-    rgba(245,158,11,0.92),
-    rgba(217,119,6,0.92)
+    rgba(245,158,11,0.95),
+    rgba(217,119,6,0.95)
   );
 }
 
@@ -405,17 +406,27 @@ button:hover{
 
 @media(max-width:1100px){
 
+  body{
+    overflow:auto;
+  }
+
   .main{
     grid-template-columns:1fr;
+    height:auto;
   }
 
   .sidebar{
-    height:auto;
+    border-right:none;
+  }
+
+  .day{
+    height:800px;
   }
 }
 
 </style>
 </head>
+
 <body>
 
 <!-- SETUP -->
@@ -468,7 +479,7 @@ button:hover{
 
 </div>
 
-<!-- TOP -->
+<!-- TOPBAR -->
 
 <div class="topbar">
 
@@ -519,11 +530,13 @@ button:hover{
         <option>Other</option>
       </select>
 
+      <label>Assigned Date</label>
       <input
         type="date"
         id="assigned"
       >
 
+      <label>Due Date</label>
       <input
         type="date"
         id="due"
@@ -559,11 +572,13 @@ button:hover{
         <option>Monthly</option>
       </select>
 
+      <label>Start</label>
       <input
         type="datetime-local"
         id="busyStart"
       >
 
+      <label>End</label>
       <input
         type="datetime-local"
         id="busyEnd"
@@ -604,12 +619,57 @@ const classes = [
   "Other"
 ];
 
-const classSelect =
+const classTimes = [
+
+  {
+    start:8,
+    end:9.38,
+    label:"8:00 - 9:23"
+  },
+
+  {
+    start:9.38,
+    end:10.83,
+    label:"9:23 - 10:50"
+  },
+
+  {
+    start:12,
+    end:13.38,
+    label:"12:00 - 1:23"
+  },
+
+  {
+    start:13.38,
+    end:14.83,
+    label:"1:23 - 2:50"
+  }
+
+];
+
+let assignments =
+JSON.parse(
+localStorage.getItem("assignments")
+) || [];
+
+let busy =
+JSON.parse(
+localStorage.getItem("busy")
+) || [];
+
+let schedule =
+JSON.parse(
+localStorage.getItem("schedule")
+);
+
+/* POPULATE DROPDOWNS */
+
+const classDropdown =
 document.getElementById("class");
 
 classes.forEach(c=>{
 
-  classSelect.innerHTML += `
+  classDropdown.innerHTML += `
     <option>${c}</option>
   `;
 
@@ -633,20 +693,7 @@ classes.forEach(c=>{
 
 });
 
-let assignments =
-JSON.parse(
-localStorage.getItem("assignments")
-) || [];
-
-let busy =
-JSON.parse(
-localStorage.getItem("busy")
-) || [];
-
-let schedule =
-JSON.parse(
-localStorage.getItem("schedule")
-);
+/* SETUP */
 
 if(!schedule){
 
@@ -688,9 +735,13 @@ function saveSchedule(){
 
 }
 
+/* ADD ASSIGNMENT */
+
 function addAssignment(){
 
   assignments.push({
+
+    id:Date.now(),
 
     title:title.value,
 
@@ -712,13 +763,20 @@ function addAssignment(){
     JSON.stringify(assignments)
   );
 
+  title.value = "";
+  hours.value = "";
+
   renderWeek();
 
 }
 
+/* ADD BUSY */
+
 function addBusy(){
 
   busy.push({
+
+    id:Date.now(),
 
     title:busyTitle.value,
 
@@ -735,9 +793,13 @@ function addBusy(){
     JSON.stringify(busy)
   );
 
+  busyTitle.value = "";
+
   renderWeek();
 
 }
+
+/* SCHOOL DAY COUNT */
 
 function getSchoolDayIndex(date){
 
@@ -746,10 +808,10 @@ function getSchoolDayIndex(date){
 
   start.setHours(0,0,0,0);
 
-  let count = 0;
-
   let current =
   new Date(start);
+
+  let count = 0;
 
   while(current < date){
 
@@ -771,38 +833,25 @@ function getSchoolDayIndex(date){
 
 }
 
+/* AB DAYS */
+
 function getABDay(date){
 
-  return
-  getSchoolDayIndex(date)%2===0
+  return getSchoolDayIndex(date)%2===0
   ? "A"
   : "B";
 
 }
 
-const classTimes = [
+/* TIME TO POSITION */
 
-  {
-    start:8,
-    end:9.38
-  },
+function hourToPixels(hour){
 
-  {
-    start:9.38,
-    end:10.83
-  },
+  return (hour-8)*80;
 
-  {
-    start:12,
-    end:13.38
-  },
+}
 
-  {
-    start:13.38,
-    end:14.83
-  }
-
-];
+/* RENDER WEEK */
 
 function renderWeek(){
 
@@ -910,7 +959,7 @@ function renderWeek(){
 
     /* CLASSES */
 
-    schedule[ab]
+    (schedule?.[ab] || [])
     .forEach((cls,index)=>{
 
       const t =
@@ -923,7 +972,7 @@ function renderWeek(){
       "event class-event";
 
       block.style.top =
-      `${(t.start-8)*80}px`;
+      `${hourToPixels(t.start)}px`;
 
       block.style.height =
       `${(t.end-t.start)*80}px`;
@@ -935,7 +984,7 @@ function renderWeek(){
         </div>
 
         <div class="event-sub">
-          Class Block
+          ${t.label}
         </div>
 
       `;
@@ -944,9 +993,65 @@ function renderWeek(){
 
     });
 
+    /* LUNCH */
+
+    const lunch =
+    document.createElement("div");
+
+    lunch.className =
+    "event busy-event";
+
+    lunch.style.top =
+    `${hourToPixels(10.83)}px`;
+
+    lunch.style.height =
+    `${(12-10.83)*80}px`;
+
+    lunch.innerHTML = `
+
+      <div class="event-title">
+        Lunch
+      </div>
+
+      <div class="event-sub">
+        10:50 - 12:00
+      </div>
+
+    `;
+
+    timeline.appendChild(lunch);
+
+    /* BUS RIDE */
+
+    const bus =
+    document.createElement("div");
+
+    bus.className =
+    "event busy-event";
+
+    bus.style.top =
+    `${hourToPixels(14.83)}px`;
+
+    bus.style.height =
+    `${(16-14.83)*80}px`;
+
+    bus.innerHTML = `
+
+      <div class="event-title">
+        Bus Ride
+      </div>
+
+      <div class="event-sub">
+        2:50 - 4:00
+      </div>
+
+    `;
+
+    timeline.appendChild(bus);
+
     /* ASSIGNMENTS */
 
-    assignments.forEach(a=>{
+    assignments.forEach((a,index)=>{
 
       if(
         a.due ===
@@ -955,7 +1060,7 @@ function renderWeek(){
         .split("T")[0]
       ){
 
-        const hw =
+        const block =
         document.createElement("div");
 
         let typeClass =
@@ -971,13 +1076,19 @@ function renderWeek(){
 
         }
 
-        hw.className =
+        block.className =
         `event ${typeClass}`;
 
-        hw.style.top = "620px";
-        hw.style.height = "75px";
+        const top =
+        650 + (index*85);
 
-        hw.innerHTML = `
+        block.style.top =
+        `${top}px`;
+
+        block.style.height =
+        `75px`;
+
+        block.innerHTML = `
 
           <div class="event-title">
             ${a.title}
@@ -990,7 +1101,7 @@ function renderWeek(){
 
         `;
 
-        timeline.appendChild(hw);
+        timeline.appendChild(block);
 
       }
 
@@ -999,6 +1110,8 @@ function renderWeek(){
   }
 
 }
+
+/* TOPBAR DATE */
 
 document
 .getElementById("todayText")
@@ -1015,6 +1128,8 @@ document
   )}
 
 `;
+
+/* INITIAL RENDER */
 
 if(schedule){
 
