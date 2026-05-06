@@ -36,6 +36,8 @@ function renderWeek(){
   const friday = new Date(monday);
   friday.setDate(monday.getDate() + 4);
 
+  const smartPlan = generateSmartStudyPlan();
+
   if(weekTitle){
     weekTitle.textContent =
       `${monday.toLocaleDateString("en-US",{month:"short",day:"numeric"})} - ${friday.toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"})}`;
@@ -45,11 +47,11 @@ function renderWeek(){
     const date = new Date(monday);
     date.setDate(monday.getDate() + i);
 
-    renderDayColumn(date, grid);
+    renderDayColumn(date, grid, smartPlan);
   }
 }
 
-function renderDayColumn(date, grid){
+function renderDayColumn(date, grid, smartPlan){
   const dateString = formatDateLocal(date);
   const ab = getABDay(date);
 
@@ -83,10 +85,11 @@ function renderDayColumn(date, grid){
   const timeline = day.querySelector(".timeline");
 
   renderHourRows(timeline);
-  renderClassBlocks(timeline, ab);
+  renderClassBlocks(timeline, ab, dateString);
   renderFlexBlocks(timeline);
   renderBusyBlocks(timeline, date);
-  renderAssignmentBlocks(timeline, dateString);
+  renderSmartStudyBlocks(timeline, dateString, smartPlan);
+  renderUnmatchedDueAssignments(timeline, dateString, ab);
   renderCurrentTimeLine(timeline, date);
 }
 
@@ -104,7 +107,12 @@ function renderHourRows(timeline){
   }
 }
 
-function renderClassBlocks(timeline, ab){
+/*
+  Due assignments now appear INSIDE the class block
+  for the selected class on that day.
+*/
+
+function renderClassBlocks(timeline, ab, dateString){
   const classesToday = schedule?.[ab] || [];
 
   classesToday.forEach((className, index) => {
@@ -112,12 +120,24 @@ function renderClassBlocks(timeline, ab){
 
     if(!time) return;
 
+    const dueForThisClass = assignments.filter(item =>
+      item.due === dateString &&
+      item.className === className
+    );
+
+    const dueHTML = dueForThisClass.map(item => `
+      <div class="due-inside-class ${item.type === "Test" || item.type === "Quiz" ? "due-test" : ""}">
+        <strong>${item.type}:</strong> ${item.title}
+      </div>
+    `).join("");
+
     const block = createEventBlock({
       title:className,
       subtitle:`Period ${time.period} · ${time.label}`,
       className:"class-event",
       start:time.start,
-      end:time.end
+      end:time.end,
+      extraHTML:dueHTML
     });
 
     timeline.appendChild(block);
@@ -166,12 +186,43 @@ function renderBusyBlocks(timeline, date){
   });
 }
 
-function renderAssignmentBlocks(timeline, dateString){
-  const dueToday = assignments.filter(item => item.due === dateString);
+/*
+  These are the AI generated sessions that make sure
+  work is completed by the due date.
+*/
 
-  dueToday.forEach((item, index) => {
-    const start = 16.2 + index * 1.05;
-    const end = start + 0.9;
+function renderSmartStudyBlocks(timeline, dateString, smartPlan){
+  const sessions = smartPlan[dateString] || [];
+
+  sessions.forEach(session => {
+    const block = createEventBlock({
+      title:`Work on ${session.title}`,
+      subtitle:`${session.className} · finish by ${session.due}`,
+      className:"study-event",
+      start:session.start,
+      end:session.end
+    });
+
+    timeline.appendChild(block);
+  });
+}
+
+/*
+  If an assignment is due on a day where that class does NOT meet,
+  it still appears after school so it does not disappear.
+*/
+
+function renderUnmatchedDueAssignments(timeline, dateString, ab){
+  const classesToday = schedule?.[ab] || [];
+
+  const unmatched = assignments.filter(item =>
+    item.due === dateString &&
+    !classesToday.includes(item.className)
+  );
+
+  unmatched.forEach((item, index) => {
+    const start = 16.3 + index * 0.95;
+    const end = start + 0.75;
 
     let eventClass = "homework-event";
 
@@ -184,16 +235,12 @@ function renderAssignmentBlocks(timeline, dateString){
     }
 
     const block = createEventBlock({
-      title:item.completed ? `✓ ${item.title}` : item.title,
-      subtitle:`${item.className} · ${item.type} · Due`,
+      title:`Due: ${item.title}`,
+      subtitle:`${item.className} · ${item.type}`,
       className:eventClass,
       start:start,
       end:end
     });
-
-    if(item.completed){
-      block.style.opacity = "0.48";
-    }
 
     timeline.appendChild(block);
   });
@@ -215,16 +262,24 @@ function renderCurrentTimeLine(timeline, date){
   timeline.appendChild(line);
 }
 
-function createEventBlock({title, subtitle, className, start, end}){
+function createEventBlock({
+  title,
+  subtitle,
+  className,
+  start,
+  end,
+  extraHTML = ""
+}){
   const block = document.createElement("div");
 
   block.className = `event ${className}`;
   block.style.top = `${hourToPixels(start)}px`;
-  block.style.height = `${Math.max(38,(end - start) * 80)}px`;
+  block.style.height = `${Math.max(42,(end - start) * 72)}px`;
 
   block.innerHTML = `
     <div class="event-title">${title}</div>
     <div class="event-sub">${subtitle}</div>
+    ${extraHTML}
   `;
 
   return block;
