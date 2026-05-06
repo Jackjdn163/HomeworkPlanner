@@ -1,20 +1,29 @@
+function loadJSON(key, fallback){
+  try{
+    const value = localStorage.getItem(key);
+    return value ? JSON.parse(value) : fallback;
+  }catch(error){
+    console.warn("Could not load", key, error);
+    return fallback;
+  }
+}
+
+function saveJSON(key, value){
+  localStorage.setItem(key, JSON.stringify(value));
+}
+
 function saveAssignments(){
-  localStorage.setItem(
-    "assignments",
-    JSON.stringify(assignments)
-  );
+  saveJSON("assignments", assignments);
 }
 
 function saveBusy(){
-  localStorage.setItem(
-    "busy",
-    JSON.stringify(busy)
-  );
+  saveJSON("busy", busy);
 }
 
 function saveScheduleData(){
-  localStorage.setItem(
-    "schedule",
-    JSON.stringify(schedule)
-  );
+  saveJSON("schedule", schedule);
+}
+
+function saveWeekOffset(){
+  saveJSON("weekOffset", weekOffset);
 }
