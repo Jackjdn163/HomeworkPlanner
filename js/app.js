@@ -1,132 +1,124 @@
-let schedule = JSON.parse(
-  localStorage.getItem("schedule")
-) || {
+let schedule = loadJSON("schedule", null);
 
-  A:[
-    "Math",
-    "English",
-    "History",
-    "Science"
-  ],
+function populateSelect(id, options){
+  const select = document.getElementById(id);
 
-  B:[
-    "Theatre",
-    "Spanish",
-    "Elective",
-    "Health/Fitness"
-  ]
+  if(!select) return;
 
-};
+  select.innerHTML = "";
 
-/* DATE */
-
-document
-.getElementById("todayText")
-.innerHTML =
-
-new Date()
-.toLocaleDateString(
-  "en-US",
-  {
-    weekday:"long",
-    month:"long",
-    day:"numeric"
-  }
-);
-
-/* CLASS DROPDOWN */
-
-classes.forEach(c=>{
-
-  document
-  .getElementById("class")
-  .innerHTML += `
-
-    <option>
-      ${c}
-    </option>
-
-  `;
-
-});
-
-/* SETUP DROPDOWNS */
-
-[
-"a1","a2","a3","a4",
-"b1","b2","b3","b4"
-]
-
-.forEach(id=>{
-
-  const el =
-  document.getElementById(id);
-
-  classes.forEach(c=>{
-
-    el.innerHTML += `
-
-      <option>
-        ${c}
-      </option>
-
-    `;
-
+  options.forEach(option => {
+    select.innerHTML += `<option value="${option}">${option}</option>`;
   });
-
-});
-
-/* SETUP SCREEN */
-
-if(
-  !localStorage.getItem("schedule")
-){
-
-  document
-  .getElementById("setup")
-  .classList.remove("hidden");
-
 }
 
-/* SAVE SCHEDULE */
+function populateAllDropdowns(){
+  populateSelect("class", classes);
+
+  [
+    "a1","a2","a3","a4",
+    "b1","b2","b3","b4"
+  ].forEach(id => populateSelect(id, classes));
+}
+
+function setDefaultDates(){
+  const today = formatDateLocal(new Date());
+
+  const assigned = document.getElementById("assigned");
+  const due = document.getElementById("due");
+  const busyDate = document.getElementById("busyDate");
+
+  if(assigned) assigned.value = today;
+  if(due) due.value = today;
+  if(busyDate) busyDate.value = today;
+}
+
+function renderTodayText(){
+  const todayText = document.getElementById("todayText");
+
+  if(!todayText) return;
+
+  const now = new Date();
+  const ab = getABDay(now);
+
+  todayText.innerHTML = `
+    <div>${now.toLocaleDateString("en-US",{
+      weekday:"long",
+      month:"long",
+      day:"numeric"
+    })}</div>
+    <div style="font-size:0.82rem; opacity:0.72; margin-top:3px;">
+      ${ab} Day
+    </div>
+  `;
+}
+
+function showSetupIfNeeded(){
+  const setup = document.getElementById("setup");
+
+  if(!setup) return;
+
+  if(!schedule){
+    setup.classList.remove("hidden");
+  }
+}
 
 function saveSchedule(){
-
   schedule = {
-
     A:[
-      a1.value,
-      a2.value,
-      a3.value,
-      a4.value
+      document.getElementById("a1").value,
+      document.getElementById("a2").value,
+      document.getElementById("a3").value,
+      document.getElementById("a4").value
     ],
 
     B:[
-      b1.value,
-      b2.value,
-      b3.value,
-      b4.value
+      document.getElementById("b1").value,
+      document.getElementById("b2").value,
+      document.getElementById("b3").value,
+      document.getElementById("b4").value
     ]
-
   };
 
-  localStorage.setItem(
-    "schedule",
-    JSON.stringify(schedule)
-  );
+  saveScheduleData();
 
-  document
-  .getElementById("setup")
-  .classList.add("hidden");
+  document.getElementById("setup").classList.add("hidden");
 
-  renderWeek();
-
+  renderAll();
 }
 
-/* STARTUP */
+function resetScheduleSetup(){
+  localStorage.removeItem("schedule");
+  schedule = null;
 
-renderWeek();
+  const setup = document.getElementById("setup");
 
-updateDateFields();
+  if(setup){
+    setup.classList.remove("hidden");
+  }
+}
 
-initializeAI();
+function initializeApp(){
+  populateAllDropdowns();
+  setDefaultDates();
+  renderTodayText();
+  updateDateFields();
+  showSetupIfNeeded();
+
+  if(!schedule){
+    schedule = {
+      A:["Math","English","History","Science"],
+      B:["Theatre","Spanish","Elective","Health/Fitness"]
+    };
+  }
+
+  initializeAI();
+  renderAll();
+
+  setInterval(() => {
+    renderTodayText();
+    renderWeek();
+  }, 60000);
+}
+
+initializeApp();
