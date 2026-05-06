@@ -142,11 +142,6 @@ function renderHourRows(timeline){
   }
 }
 
-/*
-  These are subtle background availability blocks.
-  They show where the AI is allowed to place homework.
-*/
-
 function renderFlexBackgroundBlocks(timeline){
   const lunch =
     createEventBlock({
@@ -179,11 +174,6 @@ function renderFlexBackgroundBlocks(timeline){
   timeline.appendChild(bus);
   timeline.appendChild(afterSchool);
 }
-
-/*
-  Due assignments appear inside the class block
-  for the selected class on the due day.
-*/
 
 function renderClassBlocks(timeline,ab,dateString){
   const classesToday =
@@ -264,6 +254,14 @@ function renderSmartStudyBlocks(timeline,dateString,smartPlan){
     const isBreak =
       session.kind === "break";
 
+    const durationMinutes =
+      Math.round(
+        (session.end - session.start) * 60
+      );
+
+    const timeRange =
+      `${decimalHourToTime(session.start)} - ${decimalHourToTime(session.end)}`;
+
     const block =
       createEventBlock({
         title:
@@ -273,8 +271,8 @@ function renderSmartStudyBlocks(timeline,dateString,smartPlan){
 
         subtitle:
           isBreak
-          ? session.label
-          : `${session.className} · finish by ${session.due}`,
+          ? `${timeRange} · ${durationMinutes} min break`
+          : `${timeRange} · ${durationMinutes} min work block`,
 
         className:
           isBreak
@@ -282,7 +280,12 @@ function renderSmartStudyBlocks(timeline,dateString,smartPlan){
           : "study-event",
 
         start:session.start,
-        end:session.end
+        end:session.end,
+
+        extraHTML:
+          isBreak
+          ? `<div class="event-chip">Reset time</div>`
+          : `<div class="event-chip">${session.className} · due ${session.due}</div>`
       });
 
     timeline.appendChild(block);
@@ -373,7 +376,7 @@ function createEventBlock({
   const block =
     document.createElement("div");
 
-  const visualGap = 2;
+  const visualGap = 4;
 
   block.className =
     `event ${className}`;
@@ -382,7 +385,7 @@ function createEventBlock({
     `${hourToPixels(start) + visualGap}px`;
 
   block.style.height =
-    `${Math.max(38,(end - start) * 72 - visualGap * 2)}px`;
+    `${Math.max(36,(end - start) * 72 - visualGap * 2)}px`;
 
   block.innerHTML = `
     <div class="event-title">
