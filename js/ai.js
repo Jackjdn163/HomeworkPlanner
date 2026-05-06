@@ -1,482 +1,222 @@
-/* =========================
-   STUDYFLOW AI ENGINE
-========================= */
-
 function getDaysUntil(dateString){
-
   const now = new Date();
+  now.setHours(0,0,0,0);
 
-  const target =
-  new Date(dateString);
+  const target = parseLocalDate(dateString);
 
-  const diff =
-  target - now;
+  if(!target) return 999;
 
-  return Math.ceil(
-    diff / (1000*60*60*24)
-  );
+  target.setHours(0,0,0,0);
 
+  return Math.ceil((target - now) / (1000 * 60 * 60 * 24));
 }
 
-/* =========================
-   PRIORITY SCORE
-========================= */
-
-function calculatePriority(a){
+function calculatePriority(assignment){
+  if(assignment.completed) return -999;
 
   let score = 0;
 
-  const days =
-  getDaysUntil(a.due);
+  const days = getDaysUntil(assignment.due);
 
-  /* DUE DATE */
-
-  if(days <= 1){
-
-    score += 100;
-
+  if(days <= 0){
+    score += 140;
+  }else if(days <= 1){
+    score += 110;
+  }else if(days <= 3){
+    score += 75;
+  }else if(days <= 7){
+    score += 40;
+  }else{
+    score += 15;
   }
 
-  else if(days <= 3){
+  score += Number(assignment.hours || 1) * 9;
 
-    score += 60;
-
-  }
-
-  else if(days <= 7){
-
-    score += 30;
-
-  }
-
-  /* HOURS */
-
-  score +=
-  Number(a.hours || 1) * 8;
-
-  /* TYPE */
-
-  if(a.type === "Test"){
-
-    score += 80;
-
-  }
-
-  if(a.type === "Quiz"){
-
-    score += 50;
-
-  }
-
-  if(a.type === "Essay"){
-
-    score += 70;
-
-  }
-
-  if(a.type === "Project"){
-
-    score += 90;
-
-  }
+  if(assignment.type === "Test") score += 90;
+  if(assignment.type === "Project") score += 85;
+  if(assignment.type === "Essay") score += 70;
+  if(assignment.type === "Quiz") score += 55;
+  if(assignment.type === "Homework") score += 25;
+  if(assignment.type === "Studying") score += 20;
 
   return score;
-
 }
-
-/* =========================
-   SORT TASKS
-========================= */
 
 function getPriorityAssignments(){
-
   return assignments
-  .map(a=>({
-
-    ...a,
-
-    priority:
-    calculatePriority(a)
-
-  }))
-
-  .sort((a,b)=>
-
-    b.priority -
-    a.priority
-
-  );
-
+    .map(item => ({
+      ...item,
+      priority:calculatePriority(item)
+    }))
+    .filter(item => !item.completed)
+    .sort((a,b) => b.priority - a.priority);
 }
 
-/* =========================
-   FREE TIME
-========================= */
-
-function calculateFreeHoursToday(){
-
-  const now =
-  new Date();
-
-  const currentHour =
-  now.getHours() +
-  (now.getMinutes()/60);
-
-  let remaining =
-  24 - currentHour;
-
-  /* sleep estimate */
-
-  remaining -= 8;
-
-  /* school estimate */
-
-  if(currentHour < 16){
-
-    remaining -=
-    (16-currentHour);
-
-  }
-
-  /* busy events */
-
-  busy.forEach(b=>{
-
-    const today =
-    new Date()
-    .toISOString()
-    .split("T")[0];
-
-    let applies = false;
-
-    if(b.repeat === "Daily"){
-
-      applies = true;
-
-    }
-
-    else if(
-      b.repeat === "One Time" &&
-      b.date === today
-    ){
-
-      applies = true;
-
-    }
-
-    if(applies){
-
-      const start =
-      parseInt(
-        b.start.split(":")[0]
-      );
-
-      const end =
-      parseInt(
-        b.end.split(":")[0]
-      );
-
-      remaining -=
-      (end-start);
-
-    }
-
-  });
-
-  return Math.max(
-    0,
-    remaining.toFixed(1)
-  );
-
+function getBestTask(){
+  return getPriorityAssignments()[0] || null;
 }
-
-/* =========================
-   TOTAL WORKLOAD
-========================= */
 
 function calculateTotalWorkload(){
-
-  let total = 0;
-
-  assignments.forEach(a=>{
-
-    total +=
-    Number(a.hours || 1);
-
-  });
-
-  return total;
-
+  return assignments
+    .filter(item => !item.completed)
+    .reduce((sum,item) => sum + Number(item.hours || 1), 0);
 }
 
-/* =========================
-   BURNOUT DETECTION
-========================= */
+function calculateFreeHoursToday(){
+  const now = new Date();
+  const currentHour = now.getHours() + now.getMinutes()/60;
+
+  let available = 0;
+
+  if(currentHour < 10 + 50/60){
+    available += 1.15;
+  }
+
+  if(currentHour < 14 + 50/60){
+    available += 1.15;
+  }
+
+  if(currentHour < 22){
+    available += Math.max(0, 22 - Math.max(currentHour, 16));
+  }
+
+  const todayString = formatDateLocal(now);
+
+  busy.forEach(item => {
+    if(!busyAppliesToDate(item, now)) return;
+
+    const start = timeToDecimal(item.start);
+    const end = timeToDecimal(item.end);
+
+    if(start === null || end === null) return;
+
+    if(item.date === todayString || item.repeat !== "One Time"){
+      const overlapStart = Math.max(start, currentHour);
+      const overlapEnd = Math.min(end, 22);
+
+      if(overlapEnd > overlapStart){
+        available -= overlapEnd - overlapStart;
+      }
+    }
+  });
+
+  return Math.max(0, Number(available.toFixed(1)));
+}
 
 function getStressLevel(){
+  const workload = calculateTotalWorkload();
+  const urgentCount = assignments.filter(item => !item.completed && getDaysUntil(item.due) <= 2).length;
 
-  const workload =
-  calculateTotalWorkload();
-
-  if(workload >= 20){
-
+  if(workload >= 16 || urgentCount >= 4){
     return {
       level:"Extreme",
-      color:"#ef4444"
+      color:"#ef4444",
+      message:"Too much is stacked up. Start with the highest priority task."
     };
-
   }
 
-  if(workload >= 10){
-
+  if(workload >= 9 || urgentCount >= 2){
     return {
       level:"High",
-      color:"#f59e0b"
+      color:"#f59e0b",
+      message:"You should plan work sessions soon."
     };
-
   }
 
-  if(workload >= 5){
-
+  if(workload >= 4){
     return {
       level:"Moderate",
-      color:"#eab308"
+      color:"#eab308",
+      message:"Manageable, but do not let it pile up."
     };
-
   }
 
   return {
     level:"Low",
-    color:"#10b981"
+    color:"#10b981",
+    message:"Your workload looks manageable."
   };
-
 }
-
-/* =========================
-   AI RECOMMENDATION
-========================= */
-
-function getBestTask(){
-
-  const sorted =
-  getPriorityAssignments();
-
-  return sorted[0];
-
-}
-
-/* =========================
-   CAN FINISH TONIGHT
-========================= */
 
 function canFinishTonight(){
-
-  const free =
-  calculateFreeHoursToday();
-
-  const workload =
-  calculateTotalWorkload();
-
-  return workload <= free;
-
+  return calculateTotalWorkload() <= calculateFreeHoursToday();
 }
 
-/* =========================
-   AI PANEL
-========================= */
-
 function renderAIInsights(){
+  const sidebar = document.querySelector(".sidebar");
 
-  let panel =
-  document.getElementById(
-    "aiInsights"
-  );
+  if(!sidebar) return;
+
+  let panel = document.getElementById("aiInsights");
 
   if(!panel){
-
-    panel =
-    document.createElement("div");
-
+    panel = document.createElement("div");
     panel.id = "aiInsights";
-
     panel.className = "card";
-
-    document
-    .querySelector(".sidebar")
-    .prepend(panel);
-
+    sidebar.prepend(panel);
   }
 
-  const best =
-  getBestTask();
-
-  const stress =
-  getStressLevel();
-
-  const finish =
-  canFinishTonight();
+  const best = getBestTask();
+  const stress = getStressLevel();
+  const freeTime = calculateFreeHoursToday();
+  const workload = calculateTotalWorkload();
+  const finishTonight = canFinishTonight();
 
   panel.innerHTML = `
+    <div class="section-title">AI Planner</div>
 
-    <div class="section-title">
-      AI Planner
+    <div style="margin-bottom:16px;">
+      <div style="font-size:0.75rem; font-weight:900; opacity:0.65; margin-bottom:5px;">
+        RECOMMENDED NEXT TASK
+      </div>
+
+      <div style="font-size:1.18rem; font-weight:950;">
+        ${best ? best.title : "Nothing due"}
+      </div>
+
+      <div style="font-size:0.82rem; opacity:0.72; margin-top:5px;">
+        ${best ? `${best.className} · ${best.type} · Due ${best.due}` : "You are caught up."}
+      </div>
     </div>
 
-    <div style="
-      margin-bottom:18px;
-    ">
-
-      <div style="
-        font-size:0.8rem;
-        opacity:0.7;
-        margin-bottom:5px;
-      ">
-        RECOMMENDED TASK
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px;">
+      <div style="padding:12px; border-radius:16px; background:rgba(255,255,255,0.06);">
+        <div style="font-size:0.72rem; opacity:0.65; font-weight:900;">FREE TODAY</div>
+        <div style="font-size:1.35rem; font-weight:950;">${freeTime}h</div>
       </div>
 
-      <div style="
-        font-size:1.2rem;
-        font-weight:800;
-      ">
-        ${
-          best
-          ? best.title
-          : "Nothing Due"
-        }
+      <div style="padding:12px; border-radius:16px; background:rgba(255,255,255,0.06);">
+        <div style="font-size:0.72rem; opacity:0.65; font-weight:900;">WORKLOAD</div>
+        <div style="font-size:1.35rem; font-weight:950;">${workload}h</div>
       </div>
-
-      ${
-        best
-        ? `
-        <div style="
-          margin-top:6px;
-          opacity:0.75;
-        ">
-          ${best.className}
-          •
-          ${best.type}
-        </div>
-        `
-        : ""
-      }
-
     </div>
 
-    <div style="
-      margin-bottom:18px;
-    ">
-
-      <div style="
-        font-size:0.8rem;
-        opacity:0.7;
-        margin-bottom:5px;
-      ">
-        TODAY'S FREE TIME
-      </div>
-
-      <div style="
-        font-size:1.5rem;
-        font-weight:800;
-      ">
-        ${calculateFreeHoursToday()}h
-      </div>
-
-    </div>
-
-    <div style="
-      margin-bottom:18px;
-    ">
-
-      <div style="
-        font-size:0.8rem;
-        opacity:0.7;
-        margin-bottom:5px;
-      ">
+    <div style="margin-bottom:16px;">
+      <div style="font-size:0.75rem; font-weight:900; opacity:0.65; margin-bottom:5px;">
         STRESS LEVEL
       </div>
 
-      <div style="
-        font-size:1.2rem;
-        font-weight:800;
-        color:${stress.color};
-      ">
+      <div style="font-size:1.18rem; font-weight:950; color:${stress.color};">
         ${stress.level}
       </div>
 
+      <div style="font-size:0.82rem; opacity:0.72; margin-top:5px;">
+        ${stress.message}
+      </div>
     </div>
 
     <div>
-
-      <div style="
-        font-size:0.8rem;
-        opacity:0.7;
-        margin-bottom:5px;
-      ">
+      <div style="font-size:0.75rem; font-weight:900; opacity:0.65; margin-bottom:5px;">
         CAN YOU FINISH TONIGHT?
       </div>
 
-      <div style="
-        font-size:1.3rem;
-        font-weight:800;
-        color:
-        ${
-          finish
-          ? "#10b981"
-          : "#ef4444"
-        };
-      ">
-        ${
-          finish
-          ? "YES"
-          : "NO"
-        }
+      <div style="font-size:1.18rem; font-weight:950; color:${finishTonight ? "#10b981" : "#ef4444"};">
+        ${finishTonight ? "YES" : "NO"}
       </div>
-
     </div>
-
   `;
-
 }
-
-/* =========================
-   AUTO STUDY BLOCKS
-========================= */
-
-function generateStudySuggestions(){
-
-  const sorted =
-  getPriorityAssignments();
-
-  return sorted
-  .slice(0,3)
-  .map(a=>{
-
-    return {
-
-      title:
-      `Study ${a.title}`,
-
-      className:
-      a.className,
-
-      hours:
-      Math.min(
-        2,
-        Number(a.hours || 1)
-      )
-
-    };
-
-  });
-
-}
-
-/* =========================
-   AUTO RUN
-========================= */
 
 function initializeAI(){
-
   renderAIInsights();
-
 }
