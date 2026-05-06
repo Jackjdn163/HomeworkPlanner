@@ -20,9 +20,11 @@ function goToCurrentWeek(){
 
 function getVisibleMonday(){
   const monday = getMonday(new Date());
+
   monday.setDate(
     monday.getDate() + weekOffset * 7
   );
+
   return monday;
 }
 
@@ -113,8 +115,8 @@ function renderDayColumn(date,grid,smartPlan){
     day.querySelector(".timeline");
 
   renderHourRows(timeline);
+  renderFlexBackgroundBlocks(timeline);
   renderClassBlocks(timeline,ab,dateString);
-  renderFlexBlocks(timeline);
   renderBusyBlocks(timeline,date);
   renderSmartStudyBlocks(timeline,dateString,smartPlan);
   renderUnmatchedDueAssignments(timeline,dateString,ab);
@@ -139,6 +141,49 @@ function renderHourRows(timeline){
     timeline.appendChild(row);
   }
 }
+
+/*
+  These are now subtle background availability blocks.
+  They no longer visually fight with AI study blocks.
+*/
+
+function renderFlexBackgroundBlocks(timeline){
+  const lunch =
+    createEventBlock({
+      title:"Flex Time / Lunch",
+      subtitle:"10:50 - 12:00 · Available for homework",
+      className:"flex-event",
+      start:10 + 50/60,
+      end:12
+    });
+
+  const bus =
+    createEventBlock({
+      title:"Bus Ride / Homework",
+      subtitle:"2:50 - 4:00 · Available for study",
+      className:"flex-event",
+      start:14 + 50/60,
+      end:16
+    });
+
+  const afterSchool =
+    createEventBlock({
+      title:"After School",
+      subtitle:"4:00 - 10:00 · Main work window",
+      className:"flex-event",
+      start:16,
+      end:22
+    });
+
+  timeline.appendChild(lunch);
+  timeline.appendChild(bus);
+  timeline.appendChild(afterSchool);
+}
+
+/*
+  Due assignments appear inside the class block
+  for the selected class on the due day.
+*/
 
 function renderClassBlocks(timeline,ab,dateString){
   const classesToday =
@@ -181,29 +226,6 @@ function renderClassBlocks(timeline,ab,dateString){
 
     timeline.appendChild(block);
   });
-}
-
-function renderFlexBlocks(timeline){
-  const lunch =
-    createEventBlock({
-      title:"Flex Time / Lunch",
-      subtitle:"10:50 - 12:00 · Homework Opportunity",
-      className:"homework-event",
-      start:10 + 50/60,
-      end:12
-    });
-
-  const bus =
-    createEventBlock({
-      title:"Bus Ride / Homework",
-      subtitle:"2:50 - 4:00 · Study Opportunity",
-      className:"homework-event",
-      start:14 + 50/60,
-      end:16
-    });
-
-  timeline.appendChild(lunch);
-  timeline.appendChild(bus);
 }
 
 function renderBusyBlocks(timeline,date){
@@ -279,10 +301,10 @@ function renderUnmatchedDueAssignments(timeline,dateString,ab){
 
   unmatched.forEach((item,index) => {
     const start =
-      16.3 + index * 0.95;
+      16.25 + index * 0.85;
 
     const end =
-      start + 0.75;
+      start + 0.65;
 
     let eventClass =
       "homework-event";
