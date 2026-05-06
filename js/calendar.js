@@ -365,12 +365,6 @@ function renderCurrentTimeLine(timeline,date){
   timeline.appendChild(line);
 }
 
-/*
-  Important:
-  Breaks are now allowed to be visually short.
-  This prevents them from covering the next work block.
-*/
-
 function createEventBlock({
   title,
   subtitle,
@@ -385,6 +379,12 @@ function createEventBlock({
   const isBreak =
     className === "break-event";
 
+  const durationMinutes =
+    Math.round((end - start) * 60);
+
+  const isLongBreak =
+    isBreak && durationMinutes > 15;
+
   const visualGap =
     isBreak ? -3 : 4;
 
@@ -392,10 +392,14 @@ function createEventBlock({
     (end - start) * 72;
 
   const minHeight =
-    isBreak ? 16 : 36;
+    isBreak
+      ? durationMinutes <= 15
+        ? 16
+        : 28
+      : 36;
 
   block.className =
-    `event ${className}`;
+    `event ${className} ${isLongBreak ? "long-break" : ""}`;
 
   block.style.top =
     `${hourToPixels(start) + visualGap}px`;
@@ -404,15 +408,17 @@ function createEventBlock({
     `${Math.max(minHeight,rawHeight - 2)}px`;
 
   block.innerHTML = `
-    <div class="event-title">
-      ${title}
-    </div>
+    <div>
+      <div class="event-title">
+        ${title}
+      </div>
 
-    <div class="event-sub">
-      ${subtitle}
-    </div>
+      <div class="event-sub">
+        ${subtitle}
+      </div>
 
-    ${extraHTML}
+      ${extraHTML}
+    </div>
   `;
 
   return block;
