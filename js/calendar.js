@@ -142,37 +142,32 @@ function renderHourRows(timeline){
   }
 }
 
+/*
+  Background availability blocks.
+  These no longer have text so they do not interfere visually.
+*/
+
 function renderFlexBackgroundBlocks(timeline){
   const lunch =
     createEventBlock({
-      title:"Flex Time / Lunch",
-      subtitle:"10:50 - 12:00 · Available for homework",
+      title:"",
+      subtitle:"",
       className:"flex-event",
       start:10 + 50/60,
       end:12
     });
 
-  const bus =
+  const afternoon =
     createEventBlock({
-      title:"Bus Ride / Homework",
-      subtitle:"2:50 - 4:00 · Available for study",
+      title:"",
+      subtitle:"",
       className:"flex-event",
       start:14 + 50/60,
-      end:16
-    });
-
-  const afterSchool =
-    createEventBlock({
-      title:"After School",
-      subtitle:"4:00 - 10:00 · Main work window",
-      className:"flex-event",
-      start:16,
       end:22
     });
 
   timeline.appendChild(lunch);
-  timeline.appendChild(bus);
-  timeline.appendChild(afterSchool);
+  timeline.appendChild(afternoon);
 }
 
 function renderClassBlocks(timeline,ab,dateString){
@@ -272,7 +267,7 @@ function renderSmartStudyBlocks(timeline,dateString,smartPlan){
         subtitle:
           isBreak
           ? timeRange
-          : `${timeRange} · ${durationMinutes} min work`,
+          : `${timeRange}`,
 
         className:
           isBreak
@@ -285,7 +280,11 @@ function renderSmartStudyBlocks(timeline,dateString,smartPlan){
         extraHTML:
           isBreak
           ? ""
-          : `<div class="event-chip">${session.className} · due ${session.due}</div>`
+          : `
+            <div class="event-chip">
+              ${durationMinutes} min · ${session.className}
+            </div>
+          `
       });
 
     timeline.appendChild(block);
