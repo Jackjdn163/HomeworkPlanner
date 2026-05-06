@@ -417,5 +417,3 @@ function createEventBlock({
 
   return block;
 }
-  return block;
-}
