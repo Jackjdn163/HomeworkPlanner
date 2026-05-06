@@ -176,6 +176,14 @@ function getAssignmentDueDate(assignment){
 }
 
 function getStudyWindowsForDate(date){
+  const now = new Date();
+
+  const isToday =
+    formatDateLocal(date) === formatDateLocal(now);
+
+  const currentHour =
+    now.getHours() + now.getMinutes() / 60;
+
   let windows = [
     {
       start:10 + 50/60,
@@ -193,6 +201,20 @@ function getStudyWindowsForDate(date){
       label:"After School Work Block"
     }
   ];
+
+  /*
+    If the planner is generating sessions for today,
+    remove any part of a study window that already passed.
+  */
+
+  if(isToday){
+    windows = windows
+      .map(window => ({
+        ...window,
+        start:Math.max(window.start, currentHour)
+      }))
+      .filter(window => window.end - window.start >= 0.25);
+  }
 
   busy.forEach(item => {
     if(!busyAppliesToDate(item, date)) return;
