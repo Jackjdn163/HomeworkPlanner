@@ -266,13 +266,13 @@ function renderSmartStudyBlocks(timeline,dateString,smartPlan){
       createEventBlock({
         title:
           isBreak
-          ? "Break"
+          ? `Break · ${durationMinutes} min`
           : `Work on ${session.title}`,
 
         subtitle:
           isBreak
-          ? `${timeRange} · ${durationMinutes} min break`
-          : `${timeRange} · ${durationMinutes} min work block`,
+          ? timeRange
+          : `${timeRange} · ${durationMinutes} min work`,
 
         className:
           isBreak
@@ -284,7 +284,7 @@ function renderSmartStudyBlocks(timeline,dateString,smartPlan){
 
         extraHTML:
           isBreak
-          ? `<div class="event-chip">Reset time</div>`
+          ? ""
           : `<div class="event-chip">${session.className} · due ${session.due}</div>`
       });
 
@@ -365,6 +365,12 @@ function renderCurrentTimeLine(timeline,date){
   timeline.appendChild(line);
 }
 
+/*
+  Important:
+  Breaks are now allowed to be visually short.
+  This prevents them from covering the next work block.
+*/
+
 function createEventBlock({
   title,
   subtitle,
@@ -376,7 +382,17 @@ function createEventBlock({
   const block =
     document.createElement("div");
 
-  const visualGap = 4;
+  const isBreak =
+    className === "break-event";
+
+  const visualGap =
+    isBreak ? 1 : 4;
+
+  const rawHeight =
+    (end - start) * 72;
+
+  const minHeight =
+    isBreak ? 10 : 36;
 
   block.className =
     `event ${className}`;
@@ -385,7 +401,7 @@ function createEventBlock({
     `${hourToPixels(start) + visualGap}px`;
 
   block.style.height =
-    `${Math.max(36,(end - start) * 72 - visualGap * 2)}px`;
+    `${Math.max(minHeight,rawHeight - visualGap * 2)}px`;
 
   block.innerHTML = `
     <div class="event-title">
