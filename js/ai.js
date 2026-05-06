@@ -131,6 +131,7 @@ function calculateTotalWorkload(){
 
 function calculateFreeHoursToday(){
   const now = new Date();
+
   const currentHour =
     now.getHours() + now.getMinutes()/60;
 
@@ -155,10 +156,16 @@ function calculateFreeHoursToday(){
   busy.forEach(item => {
     if(!busyAppliesToDate(item, now)) return;
 
-    const start = timeToDecimal(item.start);
-    const end = timeToDecimal(item.end);
+    const start =
+      timeToDecimal(item.start);
 
-    if(start === null || end === null) return;
+    const end =
+      timeToDecimal(item.end);
+
+    if(
+      start === null ||
+      end === null
+    ) return;
 
     const overlapStart =
       Math.max(start,currentHour);
@@ -407,12 +414,21 @@ function addUsedWindow(usedWindowsByDate,dateString,start,end){
   });
 }
 
+function snapHour(hour){
+  /*
+    Snaps to 5-minute increments.
+    This keeps everything clean and aligned.
+  */
+  return Math.round(hour * 12) / 12;
+}
+
 /*
   This creates a balanced plan:
   - higher priority due dates go first
   - work is spread over available days
   - breaks are inserted after the chosen work amount
   - it avoids placing things in the past
+  - breaks reserve real space so assignments cannot overlap them
 */
 
 function generateSmartStudyPlan(){
@@ -473,6 +489,7 @@ function generateSmartStudyPlan(){
       );
 
     while(remainingHours > 0){
+
       const candidates = [];
 
       usableDates.forEach((date,index) => {
@@ -498,14 +515,19 @@ function generateSmartStudyPlan(){
           );
 
         windows.forEach(window => {
+          const available =
+            window.end - window.start;
+
+          if(available < 0.25) return;
+
           candidates.push({
             date,
             dateString,
             window,
             dateIndex:index,
             score:
-              dailyLoad[dateString] * 3 +
-              index * 0.2
+              dailyLoad[dateString] * 4 +
+              index * 0.25
           });
         });
       });
@@ -525,23 +547,50 @@ function generateSmartStudyPlan(){
         plan[chosen.dateString] = [];
       }
 
+      let start =
+        snapHour(chosen.window.start);
+
+      let windowEnd =
+        snapHour(chosen.window.end);
+
+      let available =
+        windowEnd - start;
+
+      if(available < 0.25){
+        addUsedWindow(
+          usedWindowsByDate,
+          chosen.dateString,
+          chosen.window.start,
+          chosen.window.end
+        );
+
+        continue;
+      }
+
       /*
-        Insert break if enough work has been done.
+        If a break is needed, insert it FIRST
+        and reserve the time so the next task cannot overlap it.
       */
 
       if(
         workSinceBreak[chosen.dateString] >= workLimit &&
-        chosen.window.end - chosen.window.start >= breakHours + 0.25
+        available >= breakHours + 0.25
       ){
+        const breakStart =
+          start;
+
+        const breakEnd =
+          snapHour(start + breakHours);
+
         const breakSession = {
-          id:`break-${chosen.dateString}-${chosen.window.start}`,
+          id:`break-${chosen.dateString}-${breakStart}`,
           kind:"break",
           title:"Break",
           className:"Break",
           type:"Break",
           due:null,
-          start:chosen.window.start,
-          end:chosen.window.start + breakHours,
+          start:breakStart,
+          end:breakEnd,
           label:`${settings.breakMinutes} min break`
         };
 
@@ -550,8 +599,8 @@ function generateSmartStudyPlan(){
         addUsedWindow(
           usedWindowsByDate,
           chosen.dateString,
-          breakSession.start,
-          breakSession.end
+          breakStart,
+          breakEnd
         );
 
         workSinceBreak[chosen.dateString] = 0;
@@ -559,39 +608,38 @@ function generateSmartStudyPlan(){
         continue;
       }
 
-      const available =
-        chosen.window.end - chosen.window.start;
-
       let chunk =
         Math.min(
           remainingHours,
           available,
-          1
+          1,
+          workLimit - workSinceBreak[chosen.dateString]
         );
 
-      if(
-        workSinceBreak[chosen.dateString] + chunk > workLimit
-      ){
-        chunk =
-          workLimit -
-          workSinceBreak[chosen.dateString];
+      chunk =
+        snapHour(chunk);
 
-        if(chunk < 0.25){
-          workSinceBreak[chosen.dateString] = workLimit;
-          continue;
-        }
+      if(chunk < 0.25){
+        workSinceBreak[chosen.dateString] = workLimit;
+        continue;
       }
 
+      const sessionStart =
+        start;
+
+      const sessionEnd =
+        snapHour(sessionStart + chunk);
+
       const session = {
-        id:`study-${assignment.id}-${chosen.dateString}-${chosen.window.start}`,
+        id:`study-${assignment.id}-${chosen.dateString}-${sessionStart}`,
         kind:"study",
         assignmentId:assignment.id,
         title:assignment.title,
         className:assignment.className,
         type:assignment.type,
         due:assignment.due,
-        start:chosen.window.start,
-        end:chosen.window.start + chunk,
+        start:sessionStart,
+        end:sessionEnd,
         label:"AI Scheduled Work Block"
       };
 
@@ -600,18 +648,32 @@ function generateSmartStudyPlan(){
       addUsedWindow(
         usedWindowsByDate,
         chosen.dateString,
-        session.start,
-        session.end
+        sessionStart,
+        sessionEnd
       );
 
-      dailyLoad[chosen.dateString] += chunk;
-      workSinceBreak[chosen.dateString] += chunk;
+      dailyLoad[chosen.dateString] +=
+        sessionEnd - sessionStart;
 
-      remainingHours -= chunk;
+      workSinceBreak[chosen.dateString] +=
+        sessionEnd - sessionStart;
+
+      remainingHours -=
+        sessionEnd - sessionStart;
 
       remainingHours =
         Number(remainingHours.toFixed(2));
     }
+  });
+
+  /*
+    Sort each day's sessions by time so the visual order is clean.
+  */
+
+  Object.keys(plan).forEach(dateString => {
+    plan[dateString].sort((a,b) =>
+      a.start - b.start
+    );
   });
 
   return plan;
@@ -695,7 +757,7 @@ function renderAIInsights(){
           current
           ? current.kind === "break"
             ? current.label
-            : `${current.className} · ${current.start.toFixed(2)} - ${current.end.toFixed(2)}`
+            : `${current.className} · ${decimalHourToTime(current.start)} - ${decimalHourToTime(current.end)}`
           : "The planner will show your next scheduled work block here."
         }
       </div>
@@ -751,6 +813,22 @@ function renderAIInsights(){
       </div>
     </div>
   `;
+}
+
+function decimalHourToTime(decimal){
+  const hour = Math.floor(decimal);
+  const minutes = Math.round((decimal - hour) * 60);
+
+  const date = new Date();
+  date.setHours(hour, minutes, 0, 0);
+
+  return date.toLocaleTimeString(
+    "en-US",
+    {
+      hour:"numeric",
+      minute:"2-digit"
+    }
+  );
 }
 
 function initializeAI(){
