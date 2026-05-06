@@ -88,8 +88,6 @@
   border-radius:15px;
   padding:9px;
   overflow:hidden;
-  border:1px solid rgba(255,255,255,0.12);
-  box-shadow:0 8px 22px rgba(0,0,0,0.24);
   color:white;
   box-sizing:border-box;
 }
@@ -100,7 +98,6 @@
   font-weight:900;
   font-size:0.84rem;
   line-height:1.12;
-  white-space:normal;
 }
 
 .event-sub{
@@ -114,29 +111,14 @@
 
 .class-event{
   z-index:10;
+  border:1px solid rgba(255,255,255,0.16);
   background:
     linear-gradient(
       135deg,
-      rgba(59,130,246,0.94),
-      rgba(99,102,241,0.94)
+      rgba(59,130,246,0.95),
+      rgba(99,102,241,0.95)
     );
-}
-
-/* AI STUDY BLOCKS */
-
-.study-event{
-  z-index:30;
-  left:82px;
-  right:14px;
-  background:
-    linear-gradient(
-      135deg,
-      rgba(139,92,246,0.97),
-      rgba(79,70,229,0.97)
-    );
-  box-shadow:
-    0 10px 26px rgba(79,70,229,0.28),
-    0 4px 18px rgba(0,0,0,0.32);
+  box-shadow:0 8px 20px rgba(37,99,235,0.18);
 }
 
 /* SUBTLE FLEX WINDOWS */
@@ -148,21 +130,109 @@
   background:
     linear-gradient(
       135deg,
-      rgba(16,185,129,0.18),
-      rgba(5,150,105,0.18)
+      rgba(16,185,129,0.12),
+      rgba(5,150,105,0.12)
     );
-  border:1px dashed rgba(16,185,129,0.35);
+  border:1px dashed rgba(16,185,129,0.32);
   box-shadow:none;
-  opacity:0.75;
+  opacity:0.7;
   pointer-events:none;
 }
 
 .flex-event .event-title{
-  font-size:0.78rem;
-  opacity:0.9;
+  font-size:0.75rem;
+  opacity:0.8;
 }
 
 .flex-event .event-sub{
+  font-size:0.63rem;
+  opacity:0.7;
+}
+
+/* AI STUDY BLOCK */
+
+.study-event{
+  z-index:35;
+  left:82px;
+  right:14px;
+  padding:10px;
+  border:1px solid rgba(255,255,255,0.18);
+  background:
+    linear-gradient(
+      135deg,
+      rgba(124,58,237,0.98),
+      rgba(79,70,229,0.98)
+    );
+  box-shadow:
+    0 12px 28px rgba(79,70,229,0.28),
+    0 5px 18px rgba(0,0,0,0.34);
+}
+
+.study-event::before{
+  content:"";
+  position:absolute;
+  left:0;
+  top:0;
+  bottom:0;
+  width:5px;
+  background:rgba(255,255,255,0.35);
+}
+
+.study-event .event-title{
+  font-size:0.83rem;
+}
+
+.study-event .event-sub{
+  font-size:0.66rem;
+}
+
+/* TIME BADGE INSIDE WORK BLOCKS */
+
+.event-chip{
+  display:inline-block;
+  margin-top:6px;
+  padding:4px 7px;
+  border-radius:999px;
+  font-size:0.62rem;
+  font-weight:900;
+  background:rgba(255,255,255,0.17);
+  color:white;
+}
+
+/* BREAK BLOCK */
+
+.break-event{
+  z-index:40;
+  left:92px;
+  right:24px;
+  padding:8px 10px;
+  border:1px solid rgba(125,211,252,0.45);
+  background:
+    linear-gradient(
+      135deg,
+      rgba(14,165,233,0.96),
+      rgba(6,182,212,0.96)
+    );
+  box-shadow:
+    0 8px 20px rgba(6,182,212,0.25),
+    0 4px 12px rgba(0,0,0,0.25);
+}
+
+.break-event::before{
+  content:"";
+  position:absolute;
+  left:0;
+  top:0;
+  bottom:0;
+  width:5px;
+  background:rgba(255,255,255,0.42);
+}
+
+.break-event .event-title{
+  font-size:0.78rem;
+}
+
+.break-event .event-sub{
   font-size:0.64rem;
 }
 
@@ -170,6 +240,7 @@
 
 .homework-event{
   z-index:20;
+  border:1px solid rgba(255,255,255,0.16);
   background:
     linear-gradient(
       135deg,
@@ -180,6 +251,7 @@
 
 .test-event{
   z-index:25;
+  border:1px solid rgba(255,255,255,0.16);
   background:
     linear-gradient(
       135deg,
@@ -190,28 +262,13 @@
 
 .busy-event{
   z-index:50;
+  border:1px solid rgba(255,255,255,0.16);
   background:
     linear-gradient(
       135deg,
       rgba(245,158,11,0.96),
       rgba(217,119,6,0.96)
     );
-}
-
-.break-event{
-  z-index:40;
-  left:82px;
-  right:14px;
-  background:
-    linear-gradient(
-      135deg,
-      rgba(14,165,233,0.94),
-      rgba(6,182,212,0.94)
-    );
-  border:1px solid rgba(255,255,255,0.22);
-  box-shadow:
-    0 8px 22px rgba(6,182,212,0.24),
-    0 4px 14px rgba(0,0,0,0.28);
 }
 
 /* DUE ASSIGNMENTS INSIDE CLASS */
