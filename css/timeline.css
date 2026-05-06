@@ -218,24 +218,48 @@
     0 4px 12px rgba(0,0,0,0.25);
 }
 
-.break-event::before{
-  content:"";
-  position:absolute;
-  left:0;
-  top:0;
-  bottom:0;
-  width:5px;
-  background:rgba(255,255,255,0.42);
+.break-event{
+  z-index:40;
+  left:88px;
+  right:20px;
+
+  padding:0;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+
+  border-radius:999px;
+
+  border:1px solid rgba(125,211,252,0.55);
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(14,165,233,0.98),
+      rgba(6,182,212,0.98)
+    );
+
+  box-shadow:
+    0 6px 16px rgba(6,182,212,0.22),
+    0 3px 10px rgba(0,0,0,0.22);
 }
 
 .break-event .event-title{
-  font-size:0.78rem;
+  font-size:0.68rem;
+  font-weight:950;
+  margin:0;
+  line-height:1;
 }
 
 .break-event .event-sub{
-  font-size:0.64rem;
+  display:none;
 }
 
+.break-event::before{
+  display:none;
+}
 /* HOMEWORK / DUE BLOCKS */
 
 .homework-event{
