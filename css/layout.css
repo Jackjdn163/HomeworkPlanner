@@ -1,1 +1,43 @@
+.topbar{
+  height:80px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:0 24px;
+  border-bottom:1px solid rgba(255,255,255,0.08);
+}
 
+.logo{
+  font-size:2rem;
+  font-weight:800;
+}
+
+.subtitle{
+  color:var(--muted);
+}
+
+.main{
+  display:grid;
+  grid-template-columns:360px 1fr;
+  height:calc(100vh - 80px);
+}
+
+.sidebar{
+  overflow-y:auto;
+  height:calc(100vh - 80px);
+  padding:20px;
+  padding-bottom:120px;
+  border-right:1px solid rgba(255,255,255,0.08);
+}
+
+.week-container{
+  overflow-x:auto;
+  overflow-y:hidden;
+  padding:20px;
+}
+
+.week-grid{
+  display:grid;
+  grid-template-columns:repeat(5,320px);
+  gap:18px;
+}
