@@ -143,8 +143,8 @@ function renderHourRows(timeline){
 }
 
 /*
-  These are now subtle background availability blocks.
-  They no longer visually fight with AI study blocks.
+  These are subtle background availability blocks.
+  They show where the AI is allowed to place homework.
 */
 
 function renderFlexBackgroundBlocks(timeline){
@@ -373,14 +373,16 @@ function createEventBlock({
   const block =
     document.createElement("div");
 
+  const visualGap = 2;
+
   block.className =
     `event ${className}`;
 
   block.style.top =
-    `${hourToPixels(start)}px`;
+    `${hourToPixels(start) + visualGap}px`;
 
   block.style.height =
-    `${Math.max(42,(end - start) * 72)}px`;
+    `${Math.max(38,(end - start) * 72 - visualGap * 2)}px`;
 
   block.innerHTML = `
     <div class="event-title">
