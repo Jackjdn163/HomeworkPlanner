@@ -421,8 +421,7 @@ function generateSmartStudyPlan(){
   const dailyLoad = {};
   const workSinceBreak = {};
 
-  const settings =
-    getPlannerSettings();
+  const settings = getPlannerSettings();
 
   const breakHours =
     settings.breakMinutes / 60;
@@ -473,6 +472,7 @@ function generateSmartStudyPlan(){
       );
 
     while(remainingHours > 0){
+
       const candidates = [];
 
       usableDates.forEach((date,index) => {
@@ -498,7 +498,10 @@ function generateSmartStudyPlan(){
           );
 
         windows.forEach(window => {
-          if(window.end - window.start < 0.25) return;
+          const available =
+            window.end - window.start;
+
+          if(available < 0.25) return;
 
           candidates.push({
             date,
@@ -507,7 +510,8 @@ function generateSmartStudyPlan(){
             dateIndex:index,
             score:
               dailyLoad[dateString] * 4 +
-              index * 0.25
+              index * 0.25 +
+              window.start * 0.01
           });
         });
       });
@@ -520,8 +524,96 @@ function generateSmartStudyPlan(){
         a.score - b.score
       );
 
-      const chosen =
-        candidates[0];
+      let chosen = null;
+
+      /*
+        If a break is required, only choose a window
+        where the full break can fit.
+      */
+
+      const breakNeededSomewhere =
+        candidates.some(candidate =>
+          workSinceBreak[candidate.dateString] >= workLimit
+        );
+
+      if(breakNeededSomewhere){
+        chosen =
+          candidates.find(candidate => {
+            const dateString =
+              candidate.dateString;
+
+            if(
+              workSinceBreak[dateString] < workLimit
+            ){
+              return false;
+            }
+
+            const start =
+              snapHour(candidate.window.start);
+
+            const end =
+              snapHour(candidate.window.end);
+
+            return end - start >= breakHours;
+          });
+
+        /*
+          If a break is required but there is no room for it,
+          block the smallest unusable window so the planner
+          tries the next open space.
+        */
+
+        if(!chosen){
+          const blocked =
+            candidates[0];
+
+          addUsedWindow(
+            usedWindowsByDate,
+            blocked.dateString,
+            blocked.window.start,
+            blocked.window.end
+          );
+
+          continue;
+        }
+
+        if(!plan[chosen.dateString]){
+          plan[chosen.dateString] = [];
+        }
+
+        const breakStart =
+          snapHour(chosen.window.start);
+
+        const breakEnd =
+          snapHour(breakStart + breakHours);
+
+        const breakSession = {
+          id:`break-${chosen.dateString}-${breakStart}`,
+          kind:"break",
+          title:"Break",
+          className:"Break",
+          type:"Break",
+          due:null,
+          start:breakStart,
+          end:breakEnd,
+          label:`${settings.breakMinutes} min break`
+        };
+
+        plan[chosen.dateString].push(breakSession);
+
+        addUsedWindow(
+          usedWindowsByDate,
+          chosen.dateString,
+          breakStart,
+          breakEnd
+        );
+
+        workSinceBreak[chosen.dateString] = 0;
+
+        continue;
+      }
+
+      chosen = candidates[0];
 
       const dateString =
         chosen.dateString;
@@ -530,13 +622,13 @@ function generateSmartStudyPlan(){
         plan[dateString] = [];
       }
 
-      let start =
+      const start =
         snapHour(chosen.window.start);
 
-      let windowEnd =
+      const windowEnd =
         snapHour(chosen.window.end);
 
-      let available =
+      const available =
         windowEnd - start;
 
       if(available < 0.25){
@@ -550,33 +642,25 @@ function generateSmartStudyPlan(){
         continue;
       }
 
-      let maxWorkBeforeBreak =
-        workLimit - workSinceBreak[dateString];
-
-      if(maxWorkBeforeBreak <= 0){
-        maxWorkBeforeBreak = workLimit;
-        workSinceBreak[dateString] = 0;
-      }
+      const remainingBeforeBreak =
+        Math.max(
+          0,
+          workLimit - workSinceBreak[dateString]
+        );
 
       let chunk =
         Math.min(
           remainingHours,
           available,
           1,
-          maxWorkBeforeBreak
+          remainingBeforeBreak || workLimit
         );
 
       chunk =
         snapHour(chunk);
 
       if(chunk < 0.25){
-        addUsedWindow(
-          usedWindowsByDate,
-          dateString,
-          start,
-          windowEnd
-        );
-
+        workSinceBreak[dateString] = workLimit;
         continue;
       }
 
@@ -621,49 +705,49 @@ function generateSmartStudyPlan(){
         Number(remainingHours.toFixed(2));
 
       /*
-        If work limit has been reached, immediately attach break
-        to the bottom of the work block.
+        If a break fits immediately after the work block,
+        place it directly underneath.
+        If it does not fit, the next loop will place it in
+        the next available space.
       */
 
-      const shouldBreak =
-        workSinceBreak[dateString] >= workLimit &&
-        remainingHours > 0;
-
-      const breakStart =
-        sessionEnd;
-
-      const breakEnd =
-        snapHour(breakStart + breakHours);
-
       if(
-        shouldBreak &&
-        breakEnd <= windowEnd
+        workSinceBreak[dateString] >= workLimit &&
+        remainingHours > 0
       ){
-        const breakSession = {
-          id:`break-${dateString}-${breakStart}`,
-          kind:"break",
-          title:"Break",
-          className:"Break",
-          type:"Break",
-          due:null,
-          start:breakStart,
-          end:breakEnd,
-          label:`${settings.breakMinutes} min break`
-        };
+        const breakStart =
+          sessionEnd;
 
-        plan[dateString].push(breakSession);
+        const breakEnd =
+          snapHour(breakStart + breakHours);
 
-        addUsedWindow(
-          usedWindowsByDate,
-          dateString,
-          breakStart,
-          breakEnd
-        );
+        if(breakEnd <= windowEnd){
+          const breakSession = {
+            id:`break-${dateString}-${breakStart}`,
+            kind:"break",
+            title:"Break",
+            className:"Break",
+            type:"Break",
+            due:null,
+            start:breakStart,
+            end:breakEnd,
+            label:`${settings.breakMinutes} min break`
+          };
 
-        dailyLoad[dateString] +=
-          breakEnd - breakStart;
+          plan[dateString].push(breakSession);
 
-        workSinceBreak[dateString] = 0;
+          addUsedWindow(
+            usedWindowsByDate,
+            dateString,
+            breakStart,
+            breakEnd
+          );
+
+          dailyLoad[dateString] +=
+            breakEnd - breakStart;
+
+          workSinceBreak[dateString] = 0;
+        }
       }
     }
   });
