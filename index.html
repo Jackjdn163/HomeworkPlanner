@@ -2,397 +2,762 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>StudyFlow</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>StudyFlow AI Planner</title>
 
-  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.css" rel="stylesheet">
 
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: Inter, sans-serif;
-    }
+<style>
 
-    body {
-      background: linear-gradient(135deg, #0f172a, #1e293b);
-      color: white;
-      min-height: 100vh;
-      padding: 20px;
-    }
+:root{
+  --bg1:#0f172a;
+  --bg2:#1e293b;
+  --card:rgba(255,255,255,0.08);
+  --border:rgba(255,255,255,0.12);
+  --text:white;
+  --muted:rgba(255,255,255,0.65);
+}
 
-    h1 {
-      font-size: 2.5rem;
-      margin-bottom: 10px;
-    }
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:Inter,sans-serif;
+}
 
-    .subtitle {
-      opacity: 0.7;
-      margin-bottom: 30px;
-    }
+body{
+  min-height:100vh;
+  background:linear-gradient(135deg,var(--bg1),var(--bg2));
+  color:var(--text);
+  padding:20px;
+}
 
-    .grid {
-      display: grid;
-      grid-template-columns: 350px 1fr;
-      gap: 20px;
-    }
+h1{
+  font-size:2.5rem;
+}
 
-    .card {
-      background: rgba(255,255,255,0.08);
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 24px;
-      padding: 20px;
-      backdrop-filter: blur(20px);
-      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-    }
+.subtitle{
+  color:var(--muted);
+  margin-top:5px;
+}
 
-    .section-title {
-      font-size: 1.2rem;
-      margin-bottom: 15px;
-      font-weight: 700;
-    }
+.top{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:25px;
+}
 
-    input, select, textarea {
-      width: 100%;
-      padding: 12px;
-      border-radius: 14px;
-      border: none;
-      margin-bottom: 12px;
-      background: rgba(255,255,255,0.08);
-      color: white;
-    }
+.layout{
+  display:grid;
+  grid-template-columns:360px 1fr;
+  gap:20px;
+}
 
-    input::placeholder,
-    textarea::placeholder {
-      color: rgba(255,255,255,0.6);
-    }
+.card{
+  background:var(--card);
+  border:1px solid var(--border);
+  backdrop-filter:blur(20px);
+  border-radius:24px;
+  padding:20px;
+  box-shadow:0 10px 40px rgba(0,0,0,0.3);
+}
 
-    button {
-      width: 100%;
-      padding: 14px;
-      border: none;
-      border-radius: 14px;
-      background: linear-gradient(90deg,#3b82f6,#8b5cf6);
-      color: white;
-      font-weight: bold;
-      cursor: pointer;
-      transition: 0.2s;
-    }
+.section{
+  font-size:1.1rem;
+  font-weight:700;
+  margin-bottom:15px;
+}
 
-    button:hover {
-      transform: scale(1.02);
-    }
+input,
+select,
+textarea{
+  width:100%;
+  padding:12px;
+  border:none;
+  border-radius:14px;
+  background:rgba(255,255,255,0.08);
+  color:white;
+  margin-bottom:12px;
+}
 
-    .assignment {
-      padding: 15px;
-      border-radius: 18px;
-      margin-bottom: 12px;
-      background: rgba(255,255,255,0.06);
-    }
+button{
+  border:none;
+  padding:14px;
+  width:100%;
+  border-radius:14px;
+  font-weight:700;
+  cursor:pointer;
+  background:linear-gradient(90deg,#3b82f6,#8b5cf6);
+  color:white;
+}
 
-    .assignment h3 {
-      margin-bottom: 5px;
-    }
+button:hover{
+  transform:scale(1.02);
+}
 
-    .assignment p {
-      opacity: 0.7;
-      font-size: 0.9rem;
-    }
+.week-grid{
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  gap:15px;
+}
 
-    .priority-high {
-      border-left: 5px solid #ef4444;
-    }
+.day{
+  background:rgba(255,255,255,0.05);
+  border-radius:20px;
+  padding:15px;
+  min-height:500px;
+}
 
-    .priority-medium {
-      border-left: 5px solid #f59e0b;
-    }
+.day-header{
+  margin-bottom:15px;
+}
 
-    .priority-low {
-      border-left: 5px solid #10b981;
-    }
+.day-name{
+  font-weight:700;
+  font-size:1.1rem;
+}
 
-    .schedule-block {
-      padding: 15px;
-      border-radius: 18px;
-      margin-bottom: 12px;
-      background: linear-gradient(90deg,#2563eb,#7c3aed);
-    }
+.ab{
+  color:#60a5fa;
+  font-size:0.9rem;
+}
 
-    #calendar {
-      margin-top: 20px;
-    }
+.class-box{
+  background:rgba(255,255,255,0.06);
+  border-radius:16px;
+  padding:10px;
+  margin-bottom:10px;
+}
 
-    .top-bar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-    }
+.class-title{
+  font-weight:700;
+  margin-bottom:5px;
+}
 
-    .today {
-      font-size: 1rem;
-      opacity: 0.7;
-    }
+.assignment{
+  padding:8px;
+  border-radius:12px;
+  background:rgba(255,255,255,0.05);
+  margin-top:6px;
+  font-size:0.9rem;
+}
 
-    @media (max-width: 900px) {
-      .grid {
-        grid-template-columns: 1fr;
-      }
-    }
-  </style>
+.test{
+  border-left:4px solid #ef4444;
+}
+
+.hw{
+  border-left:4px solid #3b82f6;
+}
+
+.study{
+  border-left:4px solid #10b981;
+}
+
+.today{
+  border:2px solid #8b5cf6;
+}
+
+.period{
+  font-size:0.8rem;
+  color:var(--muted);
+}
+
+.schedule-box{
+  margin-top:8px;
+  background:linear-gradient(90deg,#2563eb,#7c3aed);
+  padding:10px;
+  border-radius:14px;
+  font-size:0.9rem;
+}
+
+.setup-overlay{
+  position:fixed;
+  inset:0;
+  background:#020617;
+  z-index:999;
+  overflow:auto;
+  padding:40px;
+}
+
+.setup-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:20px;
+}
+
+.hidden{
+  display:none;
+}
+
+@media(max-width:1200px){
+
+  .layout{
+    grid-template-columns:1fr;
+  }
+
+  .week-grid{
+    grid-template-columns:1fr;
+  }
+}
+
+</style>
 </head>
-
 <body>
 
-  <div class="top-bar">
-    <div>
-      <h1>StudyFlow</h1>
-      <div class="subtitle">Smart Homework Planner</div>
-    </div>
+<div id="setupOverlay" class="setup-overlay hidden">
 
-    <div class="today" id="todayDate"></div>
+  <h1>Setup Your Schedule</h1>
+  <div class="subtitle" style="margin-bottom:25px;">
+    Configure your A Day and B Day classes.
   </div>
 
-  <div class="grid">
+  <div class="setup-grid">
 
-    <!-- LEFT PANEL -->
-    <div>
+    <div class="card">
+      <div class="section">A Day</div>
 
-      <div class="card">
-        <div class="section-title">Add Assignment</div>
+      <label>Period 1-2</label>
+      <select id="a1"></select>
 
-        <input type="text" id="title" placeholder="Assignment Title">
+      <label>Period 3-4</label>
+      <select id="a2"></select>
 
-        <input type="text" id="className" placeholder="Class">
+      <label>Period 7-8</label>
+      <select id="a3"></select>
 
-        <label>Assigned Date</label>
-        <input type="date" id="assignedDate">
-
-        <label>Due Date</label>
-        <input type="date" id="dueDate">
-
-        <input type="number" id="hours" placeholder="Estimated Hours">
-
-        <select id="difficulty">
-          <option>Easy</option>
-          <option>Medium</option>
-          <option>Hard</option>
-        </select>
-
-        <textarea id="notes" placeholder="Notes"></textarea>
-
-        <button onclick="addAssignment()">Add Assignment</button>
-      </div>
-
-      <div class="card" style="margin-top:20px;">
-        <div class="section-title">Busy Schedule</div>
-
-        <input type="text" id="busyName" placeholder="Activity">
-
-        <input type="datetime-local" id="busyStart">
-
-        <input type="datetime-local" id="busyEnd">
-
-        <button onclick="addBusyTime()">Add Busy Time</button>
-      </div>
-
+      <label>Period 9-10</label>
+      <select id="a4"></select>
     </div>
 
-    <!-- RIGHT PANEL -->
-    <div>
+    <div class="card">
+      <div class="section">B Day</div>
 
-      <div class="card">
-        <div class="section-title">Smart Planner</div>
+      <label>Period 1-2</label>
+      <select id="b1"></select>
 
-        <div id="smartPlan"></div>
-      </div>
+      <label>Period 3-4</label>
+      <select id="b2"></select>
 
-      <div class="card" style="margin-top:20px;">
-        <div class="section-title">Assignments</div>
+      <label>Period 7-8</label>
+      <select id="b3"></select>
 
-        <div id="assignmentList"></div>
-      </div>
-
-      <div class="card" style="margin-top:20px;">
-        <div class="section-title">Calendar</div>
-
-        <div id="calendar"></div>
-      </div>
-
+      <label>Period 9-10</label>
+      <select id="b4"></select>
     </div>
 
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
+  <div style="margin-top:20px;">
+    <button onclick="saveSchedule()">Finish Setup</button>
+  </div>
 
-  <script>
+</div>
 
-    let assignments = JSON.parse(localStorage.getItem("assignments")) || [];
-    let busyTimes = JSON.parse(localStorage.getItem("busyTimes")) || [];
+<div class="top">
 
-    const today = new Date();
+  <div>
+    <h1>StudyFlow</h1>
+    <div class="subtitle">
+      Smart AI Homework Organizer
+    </div>
+  </div>
 
-    document.getElementById("todayDate").innerText =
-      today.toLocaleDateString("en-US", {
-        weekday: "long",
-        month: "long",
-        day: "numeric"
-      });
+  <div id="todayText"></div>
 
-    function saveData() {
-      localStorage.setItem("assignments", JSON.stringify(assignments));
-      localStorage.setItem("busyTimes", JSON.stringify(busyTimes));
+</div>
+
+<div class="layout">
+
+  <!-- LEFT -->
+
+  <div>
+
+    <div class="card">
+
+      <div class="section">Quick Add Assignment</div>
+
+      <input id="title" placeholder="Assignment Title">
+
+      <select id="class">
+
+      </select>
+
+      <select id="type">
+        <option>Homework</option>
+        <option>Project</option>
+        <option>Essay</option>
+        <option>Quiz</option>
+        <option>Test</option>
+        <option>Studying</option>
+        <option>Other</option>
+      </select>
+
+      <label>Assigned Date</label>
+      <input type="date" id="assigned">
+
+      <label>Due Date</label>
+      <input type="date" id="due">
+
+      <input type="number" id="hours" placeholder="Estimated Hours">
+
+      <button onclick="addAssignment()">
+        Add Assignment
+      </button>
+
+    </div>
+
+    <div class="card" style="margin-top:20px;">
+
+      <div class="section">Busy Schedule</div>
+
+      <input id="busyTitle" placeholder="Activity">
+
+      <select id="repeat">
+        <option>One Time</option>
+        <option>Daily</option>
+        <option>Weekly</option>
+        <option>Monthly</option>
+      </select>
+
+      <label>Start</label>
+      <input type="datetime-local" id="busyStart">
+
+      <label>End</label>
+      <input type="datetime-local" id="busyEnd">
+
+      <button onclick="addBusy()">
+        Add Busy Time
+      </button>
+
+    </div>
+
+  </div>
+
+  <!-- RIGHT -->
+
+  <div>
+
+    <div class="card">
+
+      <div class="section">
+        Weekly Planner
+      </div>
+
+      <div class="week-grid" id="weekGrid">
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+
+const classes = [
+  "Math",
+  "English",
+  "History",
+  "Theatre",
+  "Spanish",
+  "Health/Fitness",
+  "Elective",
+  "Science",
+  "Study Hall",
+  "Other"
+];
+
+const periods = [
+  {
+    name:"1-2",
+    time:"8:00 - 9:23"
+  },
+  {
+    name:"3-4",
+    time:"9:23 - 10:50"
+  },
+  {
+    name:"7-8",
+    time:"12:00 - 1:23"
+  },
+  {
+    name:"9-10",
+    time:"1:23 - 2:50"
+  }
+];
+
+let assignments =
+JSON.parse(localStorage.getItem("assignments")) || [];
+
+let busy =
+JSON.parse(localStorage.getItem("busy")) || [];
+
+let schedule =
+JSON.parse(localStorage.getItem("schedule"));
+
+const classSelect =
+document.getElementById("class");
+
+classes.forEach(c=>{
+
+  classSelect.innerHTML += `
+    <option>${c}</option>
+  `;
+
+});
+
+function fillSetup(){
+
+  [
+    "a1","a2","a3","a4",
+    "b1","b2","b3","b4"
+  ].forEach(id=>{
+
+    const el = document.getElementById(id);
+
+    classes.forEach(c=>{
+
+      el.innerHTML += `
+        <option>${c}</option>
+      `;
+
+    });
+
+  });
+
+}
+
+fillSetup();
+
+if(!schedule){
+
+  document
+  .getElementById("setupOverlay")
+  .classList.remove("hidden");
+
+}
+
+function saveSchedule(){
+
+  schedule = {
+
+    A:[
+      a1.value,
+      a2.value,
+      a3.value,
+      a4.value
+    ],
+
+    B:[
+      b1.value,
+      b2.value,
+      b3.value,
+      b4.value
+    ]
+  };
+
+  localStorage.setItem(
+    "schedule",
+    JSON.stringify(schedule)
+  );
+
+  document
+  .getElementById("setupOverlay")
+  .classList.add("hidden");
+
+  renderWeek();
+
+}
+
+function addAssignment(){
+
+  assignments.push({
+
+    id:Date.now(),
+
+    title:title.value,
+
+    className:
+    document.getElementById("class").value,
+
+    type:type.value,
+
+    assigned:assigned.value,
+
+    due:due.value,
+
+    hours:hours.value
+
+  });
+
+  localStorage.setItem(
+    "assignments",
+    JSON.stringify(assignments)
+  );
+
+  renderWeek();
+
+}
+
+function addBusy(){
+
+  busy.push({
+
+    title:busyTitle.value,
+
+    repeat:repeat.value,
+
+    start:busyStart.value,
+
+    end:busyEnd.value
+
+  });
+
+  localStorage.setItem(
+    "busy",
+    JSON.stringify(busy)
+  );
+
+}
+
+function getSchoolDayIndex(date){
+
+  let start =
+  new Date();
+
+  start.setHours(0,0,0,0);
+
+  let current =
+  new Date(start);
+
+  let count = 0;
+
+  while(current < date){
+
+    current.setDate(
+      current.getDate()+1
+    );
+
+    const day =
+    current.getDay();
+
+    if(day !== 0 && day !== 6){
+
+      count++;
+
+    }
+  }
+
+  return count;
+
+}
+
+function getABDay(date){
+
+  const count =
+  getSchoolDayIndex(date);
+
+  return count % 2 === 0 ? "A" : "B";
+
+}
+
+function renderWeek(){
+
+  const grid =
+  document.getElementById("weekGrid");
+
+  grid.innerHTML = "";
+
+  let current =
+  new Date();
+
+  while(
+    current.getDay() !== 1
+  ){
+
+    current.setDate(
+      current.getDate()-1
+    );
+
+  }
+
+  for(let i=0;i<5;i++){
+
+    const day =
+    new Date(current);
+
+    day.setDate(
+      current.getDate()+i
+    );
+
+    const ab =
+    getABDay(day);
+
+    const classesToday =
+    schedule
+    ? schedule[ab]
+    : [];
+
+    const dayDiv =
+    document.createElement("div");
+
+    dayDiv.className = "day";
+
+    const today =
+    new Date();
+
+    if(
+      day.toDateString() ===
+      today.toDateString()
+    ){
+
+      dayDiv.classList.add("today");
+
     }
 
-    function addAssignment() {
+    dayDiv.innerHTML += `
 
-      const assignment = {
-        id: Date.now(),
-        title: document.getElementById("title").value,
-        className: document.getElementById("className").value,
-        assignedDate: document.getElementById("assignedDate").value,
-        dueDate: document.getElementById("dueDate").value,
-        hours: parseFloat(document.getElementById("hours").value),
-        difficulty: document.getElementById("difficulty").value,
-        notes: document.getElementById("notes").value
-      };
+      <div class="day-header">
 
-      assignments.push(assignment);
+        <div class="day-name">
+          ${day.toLocaleDateString(
+            "en-US",
+            {weekday:"long"}
+          )}
+        </div>
 
-      saveData();
+        <div class="ab">
+          ${ab} Day
+        </div>
 
-      renderAssignments();
-      generatePlan();
-      renderCalendar();
-    }
+      </div>
 
-    function addBusyTime() {
+    `;
 
-      busyTimes.push({
-        title: document.getElementById("busyName").value,
-        start: document.getElementById("busyStart").value,
-        end: document.getElementById("busyEnd").value
-      });
+    classesToday.forEach((cls,index)=>{
 
-      saveData();
-      generatePlan();
-      renderCalendar();
-    }
+      const p =
+      periods[index];
 
-    function renderAssignments() {
+      const classBox =
+      document.createElement("div");
 
-      const container = document.getElementById("assignmentList");
+      classBox.className =
+      "class-box";
 
-      container.innerHTML = "";
+      classBox.innerHTML = `
 
-      assignments.sort((a,b) => new Date(a.dueDate) - new Date(b.dueDate));
+        <div class="class-title">
+          ${cls}
+        </div>
 
-      assignments.forEach(a => {
+        <div class="period">
+          Period ${p.name}
+          • ${p.time}
+        </div>
 
-        const due = new Date(a.dueDate);
-        const now = new Date();
+      `;
 
-        const daysLeft =
-          Math.ceil((due - now) / (1000*60*60*24));
+      assignments
+      .filter(a=>{
 
-        let priorityClass = "priority-low";
+        return (
+          a.className === cls &&
+          a.due ===
+          day.toISOString()
+          .split("T")[0]
+        );
 
-        if(daysLeft <= 1) {
-          priorityClass = "priority-high";
-        } else if(daysLeft <= 3) {
-          priorityClass = "priority-medium";
-        }
+      })
+      .forEach(a=>{
 
-        container.innerHTML += `
-          <div class="assignment ${priorityClass}">
-            <h3>${a.title}</h3>
-            <p>${a.className}</p>
-            <p>Due: ${a.dueDate}</p>
-            <p>${a.hours} hour(s)</p>
+        classBox.innerHTML += `
+
+          <div class="
+            assignment
+            ${a.type==="Test"
+              ?"test"
+              :"hw"}
+          ">
+
+            ${a.title}
+            <br>
+
+            <span style="
+              font-size:0.8rem;
+              opacity:0.7;
+            ">
+              ${a.type}
+            </span>
+
           </div>
+
         `;
+
       });
+
+      dayDiv.appendChild(
+        classBox
+      );
+
+    });
+
+    const study =
+    assignments.filter(a=>{
+
+      return (
+        a.type === "Studying" &&
+        a.due ===
+        day.toISOString()
+        .split("T")[0]
+      );
+
+    });
+
+    if(study.length){
+
+      const s =
+      document.createElement("div");
+
+      s.className =
+      "schedule-box";
+
+      s.innerHTML = `
+        Suggested Study:
+        ${study[0].title}
+      `;
+
+      dayDiv.appendChild(s);
+
     }
 
-    function generatePlan() {
+    grid.appendChild(dayDiv);
 
-      const container = document.getElementById("smartPlan");
+  }
 
-      container.innerHTML = "";
+}
 
-      const now = new Date();
-
-      assignments.forEach(a => {
-
-        const due = new Date(a.dueDate);
-
-        const daysLeft =
-          Math.max(
-            1,
-            Math.ceil((due - now)/(1000*60*60*24))
-          );
-
-        const dailyHours =
-          (a.hours / daysLeft).toFixed(1);
-
-        container.innerHTML += `
-          <div class="schedule-block">
-            <h3>${a.title}</h3>
-            <p>
-              Work about ${dailyHours} hour(s) per day
-            </p>
-            <p>
-              Due ${a.dueDate}
-            </p>
-          </div>
-        `;
-      });
-
-      if(assignments.length === 0) {
-        container.innerHTML = `
-          <p style="opacity:0.7;">
-            No assignments yet.
-          </p>
-        `;
+document
+.getElementById("todayText")
+.innerHTML = `
+  ${new Date()
+    .toLocaleDateString(
+      "en-US",
+      {
+        weekday:"long",
+        month:"long",
+        day:"numeric"
       }
-    }
+    )}
+`;
 
-    function renderCalendar() {
+renderWeek();
 
-      const calendarEl = document.getElementById('calendar');
-
-      calendarEl.innerHTML = "";
-
-      const calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: 'dayGridMonth',
-
-        events: [
-
-          ...assignments.map(a => ({
-            title: a.title,
-            start: a.dueDate,
-            color: '#ef4444'
-          })),
-
-          ...busyTimes.map(b => ({
-            title: b.title,
-            start: b.start,
-            end: b.end,
-            color: '#f59e0b'
-          }))
-        ]
-      });
-
-      calendar.render();
-    }
-
-    renderAssignments();
-    generatePlan();
-    renderCalendar();
-
-  </script>
+</script>
 
 </body>
 </html>
