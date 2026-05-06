@@ -1,1 +1,22 @@
+:root{
+  --bg1:#0f172a;
+  --bg2:#1e293b;
+  --card:rgba(255,255,255,0.06);
+  --border:rgba(255,255,255,0.08);
+  --text:white;
+  --muted:rgba(255,255,255,0.6);
+}
 
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:Inter,sans-serif;
+}
+
+body{
+  background:linear-gradient(135deg,var(--bg1),var(--bg2));
+  color:white;
+  overflow-x:hidden;
+  overflow-y:auto;
+}
