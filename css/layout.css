@@ -1,10 +1,10 @@
 .topbar{
   min-height:80px;
   display:grid;
-  grid-template-columns:260px 1fr 220px;
-  gap:18px;
+  grid-template-columns:240px 1fr 210px;
+  gap:16px;
   align-items:center;
-  padding:14px 24px;
+  padding:12px 22px;
   border-bottom:1px solid var(--border);
   background:rgba(15,23,42,0.86);
   backdrop-filter:blur(20px);
@@ -41,7 +41,7 @@
 
 .main{
   display:grid;
-  grid-template-columns:380px 1fr;
+  grid-template-columns:340px 1fr;
   height:calc(100vh - 80px);
   min-height:0;
 }
@@ -49,7 +49,7 @@
 .sidebar{
   overflow-y:auto;
   height:calc(100vh - 80px);
-  padding:20px;
+  padding:16px;
   padding-bottom:140px;
   border-right:1px solid var(--border);
   background:rgba(15,23,42,0.28);
@@ -58,21 +58,21 @@
 .week-container{
   overflow-x:auto;
   overflow-y:hidden;
-  padding:20px;
+  padding:16px;
   min-width:0;
 }
 
 .week-title{
   font-weight:900;
   font-size:1.15rem;
-  margin-bottom:14px;
+  margin-bottom:12px;
   color:rgba(255,255,255,0.88);
 }
 
 .week-grid{
   display:grid;
-  grid-template-columns:repeat(5,330px);
-  gap:18px;
+  grid-template-columns:repeat(5,300px);
+  gap:14px;
   min-width:max-content;
 }
 
@@ -135,7 +135,7 @@
   }
 
   .week-grid{
-    grid-template-columns:repeat(5,310px);
+    grid-template-columns:repeat(5,290px);
   }
 
   .setup-grid{
