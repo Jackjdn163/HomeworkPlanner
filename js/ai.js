@@ -80,8 +80,6 @@ function calculateFreeHoursToday(){
     available += Math.max(0, 22 - Math.max(currentHour, 16));
   }
 
-  const todayString = formatDateLocal(now);
-
   busy.forEach(item => {
     if(!busyAppliesToDate(item, now)) return;
 
@@ -90,13 +88,11 @@ function calculateFreeHoursToday(){
 
     if(start === null || end === null) return;
 
-    if(item.date === todayString || item.repeat !== "One Time"){
-      const overlapStart = Math.max(start, currentHour);
-      const overlapEnd = Math.min(end, 22);
+    const overlapStart = Math.max(start, currentHour);
+    const overlapEnd = Math.min(end, 22);
 
-      if(overlapEnd > overlapStart){
-        available -= overlapEnd - overlapStart;
-      }
+    if(overlapEnd > overlapStart){
+      available -= overlapEnd - overlapStart;
     }
   });
 
@@ -105,7 +101,11 @@ function calculateFreeHoursToday(){
 
 function getStressLevel(){
   const workload = calculateTotalWorkload();
-  const urgentCount = assignments.filter(item => !item.completed && getDaysUntil(item.due) <= 2).length;
+
+  const urgentCount = assignments.filter(item =>
+    !item.completed &&
+    getDaysUntil(item.due) <= 2
+  ).length;
 
   if(workload >= 16 || urgentCount >= 4){
     return {
@@ -141,6 +141,219 @@ function getStressLevel(){
 function canFinishTonight(){
   return calculateTotalWorkload() <= calculateFreeHoursToday();
 }
+
+/* =========================================================
+   SMART SCHEDULING ENGINE
+   This creates study/work blocks BEFORE the due date.
+   It uses open spaces like lunch, bus, and after school.
+========================================================= */
+
+function getAssignmentStartDate(assignment){
+  const today = new Date();
+  today.setHours(0,0,0,0);
+
+  if(assignment.type === "Homework" && assignment.assigned){
+    const assignedDate = parseLocalDate(assignment.assigned);
+
+    if(assignedDate && assignedDate > today){
+      return assignedDate;
+    }
+
+    return today;
+  }
+
+  return today;
+}
+
+function getAssignmentDueDate(assignment){
+  const due = parseLocalDate(assignment.due);
+
+  if(!due) return null;
+
+  due.setHours(0,0,0,0);
+
+  return due;
+}
+
+function getStudyWindowsForDate(date){
+  let windows = [
+    {
+      start:10 + 50/60,
+      end:12,
+      label:"Lunch Work Block"
+    },
+    {
+      start:14 + 50/60,
+      end:16,
+      label:"Bus Work Block"
+    },
+    {
+      start:16,
+      end:22,
+      label:"After School Work Block"
+    }
+  ];
+
+  busy.forEach(item => {
+    if(!busyAppliesToDate(item, date)) return;
+
+    const busyStart = timeToDecimal(item.start);
+    const busyEnd = timeToDecimal(item.end);
+
+    if(busyStart === null || busyEnd === null) return;
+
+    windows = subtractBusyFromWindows(windows, busyStart, busyEnd);
+  });
+
+  return windows.filter(window => window.end - window.start >= 0.25);
+}
+
+function subtractBusyFromWindows(windows, busyStart, busyEnd){
+  const updated = [];
+
+  windows.forEach(window => {
+    if(busyEnd <= window.start || busyStart >= window.end){
+      updated.push(window);
+      return;
+    }
+
+    if(busyStart > window.start){
+      updated.push({
+        start:window.start,
+        end:busyStart,
+        label:window.label
+      });
+    }
+
+    if(busyEnd < window.end){
+      updated.push({
+        start:busyEnd,
+        end:window.end,
+        label:window.label
+      });
+    }
+  });
+
+  return updated;
+}
+
+function getDatesBetween(startDate, endDate){
+  const dates = [];
+
+  const current = new Date(startDate);
+  current.setHours(0,0,0,0);
+
+  const end = new Date(endDate);
+  end.setHours(0,0,0,0);
+
+  while(current <= end){
+    if(!isWeekend(current)){
+      dates.push(new Date(current));
+    }
+
+    current.setDate(current.getDate() + 1);
+  }
+
+  return dates;
+}
+
+function generateSmartStudyPlan(){
+  const plan = {};
+
+  const usedWindowsByDate = {};
+
+  const activeAssignments = getPriorityAssignments()
+    .filter(assignment => {
+      const due = getAssignmentDueDate(assignment);
+      return due !== null && Number(assignment.hours || 1) > 0;
+    });
+
+  activeAssignments.forEach(assignment => {
+    let remainingHours = Number(assignment.hours || 1);
+
+    const startDate = getAssignmentStartDate(assignment);
+    const dueDate = getAssignmentDueDate(assignment);
+
+    if(!dueDate) return;
+
+    /*
+      To make sure the assignment is completed BY the due date,
+      the planner tries to schedule it before the due day.
+      If there is no time before, it will use the due day as a last resort.
+    */
+
+    let finishByDate = new Date(dueDate);
+    finishByDate.setDate(finishByDate.getDate() - 1);
+
+    if(finishByDate < startDate){
+      finishByDate = new Date(dueDate);
+    }
+
+    const usableDates = getDatesBetween(startDate, finishByDate);
+
+    usableDates.forEach(date => {
+      if(remainingHours <= 0) return;
+
+      const dateString = formatDateLocal(date);
+
+      if(!plan[dateString]){
+        plan[dateString] = [];
+      }
+
+      if(!usedWindowsByDate[dateString]){
+        usedWindowsByDate[dateString] = [];
+      }
+
+      let windows = getStudyWindowsForDate(date);
+
+      usedWindowsByDate[dateString].forEach(used => {
+        windows = subtractBusyFromWindows(windows, used.start, used.end);
+      });
+
+      windows.forEach(window => {
+        if(remainingHours <= 0) return;
+
+        const available = window.end - window.start;
+
+        if(available < 0.25) return;
+
+        const chunk = Math.min(
+          remainingHours,
+          available,
+          1
+        );
+
+        const session = {
+          id:`study-${assignment.id}-${dateString}-${window.start}`,
+          assignmentId:assignment.id,
+          title:assignment.title,
+          className:assignment.className,
+          type:assignment.type,
+          due:assignment.due,
+          start:window.start,
+          end:window.start + chunk,
+          label:window.label
+        };
+
+        plan[dateString].push(session);
+
+        usedWindowsByDate[dateString].push({
+          start:session.start,
+          end:session.end
+        });
+
+        remainingHours -= chunk;
+        remainingHours = Number(remainingHours.toFixed(2));
+      });
+    });
+  });
+
+  return plan;
+}
+
+/* =========================================================
+   AI PANEL
+========================================================= */
 
 function renderAIInsights(){
   const sidebar = document.querySelector(".sidebar");
