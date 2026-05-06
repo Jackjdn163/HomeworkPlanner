@@ -386,13 +386,13 @@ function createEventBlock({
     className === "break-event";
 
   const visualGap =
-    isBreak ? 1 : 4;
+    isBreak ? -3 : 4;
 
   const rawHeight =
     (end - start) * 72;
 
   const minHeight =
-    isBreak ? 10 : 36;
+    isBreak ? 16 : 36;
 
   block.className =
     `event ${className}`;
@@ -401,7 +401,7 @@ function createEventBlock({
     `${hourToPixels(start) + visualGap}px`;
 
   block.style.height =
-    `${Math.max(minHeight,rawHeight - visualGap * 2)}px`;
+    `${Math.max(minHeight,rawHeight - 2)}px`;
 
   block.innerHTML = `
     <div class="event-title">
@@ -415,5 +415,7 @@ function createEventBlock({
     ${extraHTML}
   `;
 
+  return block;
+}
   return block;
 }
