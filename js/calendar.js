@@ -20,23 +20,35 @@ function goToCurrentWeek(){
 
 function getVisibleMonday(){
   const monday = getMonday(new Date());
-  monday.setDate(monday.getDate() + weekOffset * 7);
+  monday.setDate(
+    monday.getDate() + weekOffset * 7
+  );
   return monday;
 }
 
 function renderWeek(){
-  const grid = document.getElementById("weekGrid");
-  const weekTitle = document.getElementById("weekTitle");
+  const grid =
+    document.getElementById("weekGrid");
+
+  const weekTitle =
+    document.getElementById("weekTitle");
 
   if(!grid) return;
 
   grid.innerHTML = "";
 
-  const monday = getVisibleMonday();
-  const friday = new Date(monday);
-  friday.setDate(monday.getDate() + 4);
+  const monday =
+    getVisibleMonday();
 
-  const smartPlan = generateSmartStudyPlan();
+  const friday =
+    new Date(monday);
+
+  friday.setDate(
+    monday.getDate() + 4
+  );
+
+  const smartPlan =
+    generateSmartStudyPlan();
 
   if(weekTitle){
     weekTitle.textContent =
@@ -45,20 +57,35 @@ function renderWeek(){
 
   for(let i = 0; i < 5; i++){
     const date = new Date(monday);
-    date.setDate(monday.getDate() + i);
 
-    renderDayColumn(date, grid, smartPlan);
+    date.setDate(
+      monday.getDate() + i
+    );
+
+    renderDayColumn(
+      date,
+      grid,
+      smartPlan
+    );
   }
 }
 
-function renderDayColumn(date, grid, smartPlan){
-  const dateString = formatDateLocal(date);
-  const ab = getABDay(date);
+function renderDayColumn(date,grid,smartPlan){
+  const dateString =
+    formatDateLocal(date);
 
-  const day = document.createElement("div");
+  const ab =
+    getABDay(date);
+
+  const day =
+    document.createElement("div");
+
   day.className = "day";
 
-  if(date.toDateString() === new Date().toDateString()){
+  if(
+    date.toDateString() ===
+    new Date().toDateString()
+  ){
     day.classList.add("today-day");
   }
 
@@ -82,24 +109,30 @@ function renderDayColumn(date, grid, smartPlan){
 
   grid.appendChild(day);
 
-  const timeline = day.querySelector(".timeline");
+  const timeline =
+    day.querySelector(".timeline");
 
   renderHourRows(timeline);
-  renderClassBlocks(timeline, ab, dateString);
+  renderClassBlocks(timeline,ab,dateString);
   renderFlexBlocks(timeline);
-  renderBusyBlocks(timeline, date);
-  renderSmartStudyBlocks(timeline, dateString, smartPlan);
-  renderUnmatchedDueAssignments(timeline, dateString, ab);
-  renderCurrentTimeLine(timeline, date);
+  renderBusyBlocks(timeline,date);
+  renderSmartStudyBlocks(timeline,dateString,smartPlan);
+  renderUnmatchedDueAssignments(timeline,dateString,ab);
+  renderCurrentTimeLine(timeline,date);
 }
 
 function renderHourRows(timeline){
   for(let h = 8; h <= 24; h++){
-    const row = document.createElement("div");
+    const row =
+      document.createElement("div");
+
     row.className = "hour-row";
 
     row.innerHTML = `
-      <div class="hour-label">${formatHourLabel(h)}</div>
+      <div class="hour-label">
+        ${formatHourLabel(h)}
+      </div>
+
       <div class="hour-line"></div>
     `;
 
@@ -107,126 +140,157 @@ function renderHourRows(timeline){
   }
 }
 
-/*
-  Due assignments now appear INSIDE the class block
-  for the selected class on that day.
-*/
+function renderClassBlocks(timeline,ab,dateString){
+  const classesToday =
+    schedule?.[ab] || [];
 
-function renderClassBlocks(timeline, ab, dateString){
-  const classesToday = schedule?.[ab] || [];
-
-  classesToday.forEach((className, index) => {
-    const time = classTimes[index];
+  classesToday.forEach((className,index) => {
+    const time =
+      classTimes[index];
 
     if(!time) return;
 
-    const dueForThisClass = assignments.filter(item =>
-      item.due === dateString &&
-      item.className === className
-    );
+    const dueForThisClass =
+      assignments.filter(item =>
+        item.due === dateString &&
+        item.className === className
+      );
 
-    const dueHTML = dueForThisClass.map(item => `
-      <div class="due-inside-class ${item.type === "Test" || item.type === "Quiz" ? "due-test" : ""}">
-        <strong>${item.type}:</strong> ${item.title}
-      </div>
-    `).join("");
+    const dueHTML =
+      dueForThisClass.map(item => `
+        <div class="due-inside-class ${
+          item.type === "Test" ||
+          item.type === "Quiz"
+          ? "due-test"
+          : ""
+        }">
+          <strong>${item.type}:</strong>
+          ${item.title}
+        </div>
+      `).join("");
 
-    const block = createEventBlock({
-      title:className,
-      subtitle:`Period ${time.period} · ${time.label}`,
-      className:"class-event",
-      start:time.start,
-      end:time.end,
-      extraHTML:dueHTML
-    });
+    const block =
+      createEventBlock({
+        title:className,
+        subtitle:`Period ${time.period} · ${time.label}`,
+        className:"class-event",
+        start:time.start,
+        end:time.end,
+        extraHTML:dueHTML
+      });
 
     timeline.appendChild(block);
   });
 }
 
 function renderFlexBlocks(timeline){
-  const lunch = createEventBlock({
-    title:"Flex Time / Lunch",
-    subtitle:"10:50 - 12:00 · Homework Opportunity",
-    className:"homework-event",
-    start:10 + 50/60,
-    end:12
-  });
+  const lunch =
+    createEventBlock({
+      title:"Flex Time / Lunch",
+      subtitle:"10:50 - 12:00 · Homework Opportunity",
+      className:"homework-event",
+      start:10 + 50/60,
+      end:12
+    });
 
-  const bus = createEventBlock({
-    title:"Bus Ride / Homework",
-    subtitle:"2:50 - 4:00 · Study Opportunity",
-    className:"homework-event",
-    start:14 + 50/60,
-    end:16
-  });
+  const bus =
+    createEventBlock({
+      title:"Bus Ride / Homework",
+      subtitle:"2:50 - 4:00 · Study Opportunity",
+      className:"homework-event",
+      start:14 + 50/60,
+      end:16
+    });
 
   timeline.appendChild(lunch);
   timeline.appendChild(bus);
 }
 
-function renderBusyBlocks(timeline, date){
+function renderBusyBlocks(timeline,date){
   busy.forEach(item => {
-    if(!busyAppliesToDate(item, date)) return;
+    if(!busyAppliesToDate(item,date)) return;
 
-    const start = timeToDecimal(item.start);
-    const end = timeToDecimal(item.end);
+    const start =
+      timeToDecimal(item.start);
 
-    if(start === null || end === null) return;
+    const end =
+      timeToDecimal(item.end);
 
-    const block = createEventBlock({
-      title:item.title,
-      subtitle:`${item.repeat} · ${item.start} - ${item.end}`,
-      className:"busy-event",
-      start:start,
-      end:end
-    });
+    if(
+      start === null ||
+      end === null
+    ) return;
+
+    const block =
+      createEventBlock({
+        title:item.title,
+        subtitle:`${item.repeat} · ${item.start} - ${item.end}`,
+        className:"busy-event",
+        start:start,
+        end:end
+      });
 
     timeline.appendChild(block);
   });
 }
 
-/*
-  These are the AI generated sessions that make sure
-  work is completed by the due date.
-*/
-
-function renderSmartStudyBlocks(timeline, dateString, smartPlan){
-  const sessions = smartPlan[dateString] || [];
+function renderSmartStudyBlocks(timeline,dateString,smartPlan){
+  const sessions =
+    smartPlan[dateString] || [];
 
   sessions.forEach(session => {
-    const block = createEventBlock({
-      title:`Work on ${session.title}`,
-      subtitle:`${session.className} · finish by ${session.due}`,
-      className:"study-event",
-      start:session.start,
-      end:session.end
-    });
+    const isBreak =
+      session.kind === "break";
+
+    const block =
+      createEventBlock({
+        title:
+          isBreak
+          ? "Break"
+          : `Work on ${session.title}`,
+
+        subtitle:
+          isBreak
+          ? session.label
+          : `${session.className} · finish by ${session.due}`,
+
+        className:
+          isBreak
+          ? "break-event"
+          : "study-event",
+
+        start:session.start,
+        end:session.end
+      });
 
     timeline.appendChild(block);
   });
 }
 
-/*
-  If an assignment is due on a day where that class does NOT meet,
-  it still appears after school so it does not disappear.
-*/
+function renderUnmatchedDueAssignments(timeline,dateString,ab){
+  const classesToday =
+    schedule?.[ab] || [];
 
-function renderUnmatchedDueAssignments(timeline, dateString, ab){
-  const classesToday = schedule?.[ab] || [];
+  const unmatched =
+    assignments.filter(item =>
+      item.due === dateString &&
+      !classesToday.includes(item.className)
+    );
 
-  const unmatched = assignments.filter(item =>
-    item.due === dateString &&
-    !classesToday.includes(item.className)
-  );
+  unmatched.forEach((item,index) => {
+    const start =
+      16.3 + index * 0.95;
 
-  unmatched.forEach((item, index) => {
-    const start = 16.3 + index * 0.95;
-    const end = start + 0.75;
+    const end =
+      start + 0.75;
 
-    let eventClass = "homework-event";
+    let eventClass =
+      "homework-event";
 
-    if(item.type === "Test" || item.type === "Quiz"){
+    if(
+      item.type === "Test" ||
+      item.type === "Quiz"
+    ){
       eventClass = "test-event";
     }
 
@@ -234,30 +298,44 @@ function renderUnmatchedDueAssignments(timeline, dateString, ab){
       eventClass = "study-event";
     }
 
-    const block = createEventBlock({
-      title:`Due: ${item.title}`,
-      subtitle:`${item.className} · ${item.type}`,
-      className:eventClass,
-      start:start,
-      end:end
-    });
+    const block =
+      createEventBlock({
+        title:`Due: ${item.title}`,
+        subtitle:`${item.className} · ${item.type}`,
+        className:eventClass,
+        start:start,
+        end:end
+      });
 
     timeline.appendChild(block);
   });
 }
 
-function renderCurrentTimeLine(timeline, date){
-  const now = new Date();
+function renderCurrentTimeLine(timeline,date){
+  const now =
+    new Date();
 
-  if(date.toDateString() !== now.toDateString()) return;
+  if(
+    date.toDateString() !==
+    now.toDateString()
+  ) return;
 
-  const currentHour = now.getHours() + now.getMinutes()/60;
+  const currentHour =
+    now.getHours() + now.getMinutes()/60;
 
-  if(currentHour < 8 || currentHour > 24) return;
+  if(
+    currentHour < 8 ||
+    currentHour > 24
+  ) return;
 
-  const line = document.createElement("div");
-  line.className = "current-time-line";
-  line.style.top = `${hourToPixels(currentHour)}px`;
+  const line =
+    document.createElement("div");
+
+  line.className =
+    "current-time-line";
+
+  line.style.top =
+    `${hourToPixels(currentHour)}px`;
 
   timeline.appendChild(line);
 }
@@ -270,15 +348,27 @@ function createEventBlock({
   end,
   extraHTML = ""
 }){
-  const block = document.createElement("div");
+  const block =
+    document.createElement("div");
 
-  block.className = `event ${className}`;
-  block.style.top = `${hourToPixels(start)}px`;
-  block.style.height = `${Math.max(42,(end - start) * 72)}px`;
+  block.className =
+    `event ${className}`;
+
+  block.style.top =
+    `${hourToPixels(start)}px`;
+
+  block.style.height =
+    `${Math.max(42,(end - start) * 72)}px`;
 
   block.innerHTML = `
-    <div class="event-title">${title}</div>
-    <div class="event-sub">${subtitle}</div>
+    <div class="event-title">
+      ${title}
+    </div>
+
+    <div class="event-sub">
+      ${subtitle}
+    </div>
+
     ${extraHTML}
   `;
 
