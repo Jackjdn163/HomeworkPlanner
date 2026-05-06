@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>StudyFlow AI Planner</title>
 
@@ -51,7 +51,7 @@ body{
   1px solid rgba(255,255,255,0.08);
 
   background:
-  rgba(15,23,42,0.8);
+  rgba(15,23,42,0.82);
 
   backdrop-filter:blur(20px);
 }
@@ -63,8 +63,8 @@ body{
 
 .subtitle{
   color:var(--muted);
-  font-size:0.9rem;
   margin-top:4px;
+  font-size:0.9rem;
 }
 
 .today{
@@ -84,7 +84,6 @@ body{
 
 .sidebar{
   overflow-y:auto;
-
   padding:20px;
 
   border-right:
@@ -141,8 +140,6 @@ input::placeholder{
   color:rgba(255,255,255,0.45);
 }
 
-/* THEMED SELECT */
-
 select{
   appearance:none;
 
@@ -161,6 +158,13 @@ select{
 option{
   background:#0f172a;
   color:white;
+}
+
+label{
+  display:block;
+  margin-bottom:6px;
+  font-size:0.85rem;
+  color:rgba(255,255,255,0.7);
 }
 
 /* BUTTON */
@@ -194,6 +198,28 @@ button:hover{
   transform:scale(1.02);
 }
 
+/* MAJOR ASSIGNMENT */
+
+#majorAssignmentBanner{
+  margin:20px;
+
+  padding:20px;
+
+  border-radius:24px;
+
+  background:
+  linear-gradient(
+    135deg,
+    rgba(239,68,68,0.22),
+    rgba(139,92,246,0.22)
+  );
+
+  border:
+  1px solid rgba(255,255,255,0.08);
+
+  backdrop-filter:blur(20px);
+}
+
 /* WEEK VIEW */
 
 .week-container{
@@ -224,7 +250,7 @@ button:hover{
 
   overflow-y:auto;
 
-  height:calc(100vh - 140px);
+  height:calc(100vh - 240px);
 
   border:
   1px solid rgba(255,255,255,0.08);
@@ -415,13 +441,6 @@ button:hover{
     height:auto;
   }
 
-  .sidebar{
-    border-right:none;
-  }
-
-  .day{
-    height:800px;
-  }
 }
 
 </style>
@@ -499,6 +518,10 @@ button:hover{
 
 </div>
 
+<!-- MAJOR ASSIGNMENT -->
+
+<div id="majorAssignmentBanner"></div>
+
 <!-- MAIN -->
 
 <div class="main">
@@ -520,7 +543,7 @@ button:hover{
 
       <select id="class"></select>
 
-      <select id="type">
+      <select id="type" onchange="updateDateFields()">
         <option>Homework</option>
         <option>Project</option>
         <option>Essay</option>
@@ -530,13 +553,19 @@ button:hover{
         <option>Other</option>
       </select>
 
-      <label>Assigned Date</label>
-      <input
-        type="date"
-        id="assigned"
-      >
+      <div id="assignedWrapper">
+
+        <label>Assigned Date</label>
+
+        <input
+          type="date"
+          id="assigned"
+        >
+
+      </div>
 
       <label>Due Date</label>
+
       <input
         type="date"
         id="due"
@@ -572,15 +601,24 @@ button:hover{
         <option>Monthly</option>
       </select>
 
-      <label>Start</label>
+      <label>Day</label>
+
       <input
-        type="datetime-local"
+        type="date"
+        id="busyDate"
+      >
+
+      <label>Start Time</label>
+
+      <input
+        type="time"
         id="busyStart"
       >
 
-      <label>End</label>
+      <label>End Time</label>
+
       <input
-        type="datetime-local"
+        type="time"
         id="busyEnd"
       >
 
@@ -662,7 +700,7 @@ JSON.parse(
 localStorage.getItem("schedule")
 );
 
-/* POPULATE DROPDOWNS */
+/* POPULATE */
 
 const classDropdown =
 document.getElementById("class");
@@ -735,9 +773,31 @@ function saveSchedule(){
 
 }
 
+/* HOMEWORK ONLY ASSIGNED DATE */
+
+function updateDateFields(){
+
+  const type =
+  document.getElementById("type").value;
+
+  const assignedWrapper =
+  document.getElementById(
+    "assignedWrapper"
+  );
+
+  assignedWrapper.style.display =
+  type === "Homework"
+  ? "block"
+  : "none";
+
+}
+
 /* ADD ASSIGNMENT */
 
 function addAssignment(){
+
+  const type =
+  document.getElementById("type").value;
 
   assignments.push({
 
@@ -748,13 +808,17 @@ function addAssignment(){
     className:
     document.getElementById("class").value,
 
-    type:type.value,
+    type:type,
 
-    assigned:assigned.value,
+    assigned:
+    type === "Homework"
+    ? assigned.value
+    : null,
 
     due:due.value,
 
-    hours:hours.value
+    hours:
+    hours.value || 1
 
   });
 
@@ -782,6 +846,8 @@ function addBusy(){
 
     repeat:repeat.value,
 
+    date:busyDate.value,
+
     start:busyStart.value,
 
     end:busyEnd.value
@@ -799,7 +865,7 @@ function addBusy(){
 
 }
 
-/* SCHOOL DAY COUNT */
+/* SCHOOL DAYS */
 
 function getSchoolDayIndex(date){
 
@@ -827,13 +893,12 @@ function getSchoolDayIndex(date){
       count++;
 
     }
+
   }
 
   return count;
 
 }
-
-/* AB DAYS */
 
 function getABDay(date){
 
@@ -843,17 +908,101 @@ function getABDay(date){
 
 }
 
-/* TIME TO POSITION */
-
 function hourToPixels(hour){
 
   return (hour-8)*80;
 
 }
 
-/* RENDER WEEK */
+/* MAJOR ASSIGNMENT */
+
+function renderMajorAssignment(){
+
+  const banner =
+  document.getElementById(
+    "majorAssignmentBanner"
+  );
+
+  const major =
+  assignments
+  .filter(a=>
+
+    a.type === "Project" ||
+    a.type === "Essay" ||
+    a.type === "Test"
+
+  )
+  .sort((a,b)=>
+
+    new Date(a.due) -
+    new Date(b.due)
+
+  )[0];
+
+  if(!major){
+
+    banner.innerHTML = `
+      <div style="font-weight:700;">
+        No Major Assignments
+      </div>
+    `;
+
+    return;
+
+  }
+
+  banner.innerHTML = `
+
+    <div
+      style="
+        font-size:0.8rem;
+        opacity:0.7;
+        margin-bottom:8px;
+        font-weight:700;
+      "
+    >
+      NEXT MAJOR ASSIGNMENT
+    </div>
+
+    <div
+      style="
+        font-size:1.5rem;
+        font-weight:800;
+      "
+    >
+      ${major.title}
+    </div>
+
+    <div
+      style="
+        margin-top:8px;
+        opacity:0.8;
+      "
+    >
+      ${major.className}
+      •
+      ${major.type}
+    </div>
+
+    <div
+      style="
+        margin-top:6px;
+        color:#fca5a5;
+        font-weight:700;
+      "
+    >
+      Due ${major.due}
+    </div>
+
+  `;
+
+}
+
+/* WEEK */
 
 function renderWeek(){
+
+  renderMajorAssignment();
 
   const grid =
   document.getElementById("weekGrid");
@@ -916,9 +1065,7 @@ function renderWeek(){
 
       </div>
 
-      <div class="timeline">
-
-      </div>
+      <div class="timeline"></div>
 
     `;
 
@@ -993,13 +1140,13 @@ function renderWeek(){
 
     });
 
-    /* LUNCH */
+    /* FLEX LUNCH */
 
     const lunch =
     document.createElement("div");
 
     lunch.className =
-    "event busy-event";
+    "event homework-event";
 
     lunch.style.top =
     `${hourToPixels(10.83)}px`;
@@ -1010,24 +1157,24 @@ function renderWeek(){
     lunch.innerHTML = `
 
       <div class="event-title">
-        Lunch
+        Flex Time / Lunch
       </div>
 
       <div class="event-sub">
-        10:50 - 12:00
+        Homework Opportunity
       </div>
 
     `;
 
     timeline.appendChild(lunch);
 
-    /* BUS RIDE */
+    /* BUS */
 
     const bus =
     document.createElement("div");
 
     bus.className =
-    "event busy-event";
+    "event homework-event";
 
     bus.style.top =
     `${hourToPixels(14.83)}px`;
@@ -1038,16 +1185,94 @@ function renderWeek(){
     bus.innerHTML = `
 
       <div class="event-title">
-        Bus Ride
+        Bus Ride / Homework
       </div>
 
       <div class="event-sub">
-        2:50 - 4:00
+        Study Opportunity
       </div>
 
     `;
 
     timeline.appendChild(bus);
+
+    /* BUSY EVENTS */
+
+    busy.forEach((b,index)=>{
+
+      const currentDate =
+      date.toISOString().split("T")[0];
+
+      let shouldShow = false;
+
+      if(b.repeat === "One Time"){
+
+        shouldShow =
+        b.date === currentDate;
+
+      }
+
+      else if(b.repeat === "Daily"){
+
+        shouldShow = true;
+
+      }
+
+      else if(b.repeat === "Weekly"){
+
+        shouldShow =
+        new Date(b.date).getDay() ===
+        date.getDay();
+
+      }
+
+      else if(b.repeat === "Monthly"){
+
+        shouldShow =
+        new Date(b.date).getDate() ===
+        date.getDate();
+
+      }
+
+      if(!shouldShow) return;
+
+      const startHour =
+      parseInt(b.start.split(":")[0]) +
+      parseInt(b.start.split(":")[1])/60;
+
+      const endHour =
+      parseInt(b.end.split(":")[0]) +
+      parseInt(b.end.split(":")[1])/60;
+
+      const block =
+      document.createElement("div");
+
+      block.className =
+      "event busy-event";
+
+      block.style.top =
+      `${hourToPixels(startHour)}px`;
+
+      block.style.height =
+      `${(endHour-startHour)*80}px`;
+
+      block.innerHTML = `
+
+        <div class="event-title">
+          ${b.title}
+        </div>
+
+        <div class="event-sub">
+          ${b.start}
+          -
+          ${b.end}
+        </div>
+
+      `;
+
+      timeline.appendChild(block);
+
+    });
 
     /* ASSIGNMENTS */
 
@@ -1111,7 +1336,7 @@ function renderWeek(){
 
 }
 
-/* TOPBAR DATE */
+/* TOP DATE */
 
 document
 .getElementById("todayText")
@@ -1129,7 +1354,7 @@ document
 
 `;
 
-/* INITIAL RENDER */
+updateDateFields();
 
 if(schedule){
 
