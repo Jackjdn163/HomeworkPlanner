@@ -147,7 +147,33 @@
 
         <button onclick="addBusy()">Add Busy Time</button>
       </div>
+      
+<div class="card">
+  <div class="section-title">Planner Settings</div>
 
+  <label>Break Length</label>
+  <input
+    type="number"
+    id="breakMinutes"
+    min="1"
+    value="10"
+    placeholder="Break minutes"
+  >
+
+  <label>After This Many Hours of Work</label>
+  <input
+    type="number"
+    id="workHoursBeforeBreak"
+    min="0.25"
+    step="0.25"
+    value="1"
+    placeholder="Hours of work"
+  >
+
+  <button onclick="savePlannerSettings()">
+    Save Planner Settings
+  </button>
+</div>
       <div class="card">
         <div class="section-title">Your Assignments</div>
         <div id="assignmentList"></div>
