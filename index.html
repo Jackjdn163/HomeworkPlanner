@@ -1,22 +1,20 @@
-<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>StudyFlow AI Planner</title>
 
-<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.css" rel="stylesheet">
+<title>StudyFlow AI Planner</title>
 
 <style>
 
 :root{
   --bg1:#0f172a;
   --bg2:#1e293b;
-  --card:rgba(255,255,255,0.08);
-  --border:rgba(255,255,255,0.12);
+  --card:rgba(255,255,255,0.06);
+  --border:rgba(255,255,255,0.1);
   --text:white;
-  --muted:rgba(255,255,255,0.65);
+  --muted:rgba(255,255,255,0.6);
 }
 
 *{
@@ -27,158 +25,371 @@
 }
 
 body{
+  background:
+  linear-gradient(
+    135deg,
+    var(--bg1),
+    var(--bg2)
+  );
+
+  color:white;
+
   min-height:100vh;
-  background:linear-gradient(135deg,var(--bg1),var(--bg2));
-  color:var(--text);
-  padding:20px;
+
+  overflow:hidden;
 }
 
-h1{
-  font-size:2.5rem;
+/* TOP BAR */
+
+.topbar{
+  height:80px;
+
+  border-bottom:
+  1px solid rgba(255,255,255,0.08);
+
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+
+  padding:0 25px;
+
+  background:
+  rgba(15,23,42,0.75);
+
+  backdrop-filter:blur(20px);
+}
+
+.logo{
+  font-size:2rem;
+  font-weight:800;
 }
 
 .subtitle{
   color:var(--muted);
-  margin-top:5px;
+  font-size:0.9rem;
 }
 
-.top{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:25px;
+.today{
+  text-align:right;
 }
 
-.layout{
+/* MAIN */
+
+.main{
   display:grid;
-  grid-template-columns:360px 1fr;
-  gap:20px;
+  grid-template-columns:350px 1fr;
+
+  height:calc(100vh - 80px);
+}
+
+/* SIDEBAR */
+
+.sidebar{
+  border-right:
+  1px solid rgba(255,255,255,0.08);
+
+  overflow-y:auto;
+
+  padding:20px;
 }
 
 .card{
   background:var(--card);
-  border:1px solid var(--border);
-  backdrop-filter:blur(20px);
+
+  border:
+  1px solid rgba(255,255,255,0.08);
+
   border-radius:24px;
+
   padding:20px;
-  box-shadow:0 10px 40px rgba(0,0,0,0.3);
+
+  margin-bottom:20px;
+
+  backdrop-filter:blur(20px);
+
+  box-shadow:
+  0 10px 40px rgba(0,0,0,0.25);
 }
 
-.section{
+.section-title{
   font-size:1.1rem;
   font-weight:700;
   margin-bottom:15px;
 }
 
+/* INPUTS */
+
 input,
-select,
-textarea{
+select{
   width:100%;
-  padding:12px;
-  border:none;
-  border-radius:14px;
-  background:rgba(255,255,255,0.08);
-  color:white;
+
+  padding:14px;
+
   margin-bottom:12px;
+
+  border:none;
+
+  border-radius:16px;
+
+  background:
+  rgba(255,255,255,0.08);
+
+  color:white;
+
+  font-size:0.95rem;
 }
 
-button{
-  border:none;
-  padding:14px;
-  width:100%;
-  border-radius:14px;
-  font-weight:700;
+input::placeholder{
+  color:rgba(255,255,255,0.45);
+}
+
+/* THEMED SELECT */
+
+select{
+  appearance:none;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(59,130,246,0.18),
+      rgba(139,92,246,0.18)
+    );
+
   cursor:pointer;
-  background:linear-gradient(90deg,#3b82f6,#8b5cf6);
+
+  font-weight:600;
+}
+
+/* BUTTON */
+
+button{
+  width:100%;
+
+  border:none;
+
+  padding:14px;
+
+  border-radius:16px;
+
+  background:
+  linear-gradient(
+    90deg,
+    #3b82f6,
+    #8b5cf6
+  );
+
   color:white;
+
+  font-weight:700;
+
+  cursor:pointer;
+
+  transition:0.2s;
 }
 
 button:hover{
   transform:scale(1.02);
 }
 
+/* WEEK AREA */
+
+.week-container{
+  overflow-x:auto;
+  overflow-y:hidden;
+
+  padding:20px;
+}
+
 .week-grid{
   display:grid;
-  grid-template-columns:repeat(5,1fr);
-  gap:15px;
+
+  grid-template-columns:
+  repeat(5,320px);
+
+  gap:18px;
+
+  min-width:max-content;
 }
+
+/* DAY */
 
 .day{
-  background:rgba(255,255,255,0.05);
-  border-radius:20px;
-  padding:15px;
-  min-height:500px;
+  background:
+  rgba(255,255,255,0.05);
+
+  border-radius:24px;
+
+  overflow-y:auto;
+
+  height:calc(100vh - 140px);
+
+  border:
+  1px solid rgba(255,255,255,0.08);
+
+  position:relative;
 }
 
+/* TODAY */
+
+.today-day{
+  border:
+  2px solid #8b5cf6;
+}
+
+/* HEADER */
+
 .day-header{
-  margin-bottom:15px;
+  position:sticky;
+
+  top:0;
+
+  z-index:100;
+
+  background:
+  rgba(15,23,42,0.95);
+
+  backdrop-filter:blur(20px);
+
+  padding:18px;
+
+  border-bottom:
+  1px solid rgba(255,255,255,0.08);
 }
 
 .day-name{
+  font-size:1.2rem;
   font-weight:700;
-  font-size:1.1rem;
 }
 
-.ab{
+.ab-day{
   color:#60a5fa;
-  font-size:0.9rem;
+  margin-top:5px;
 }
 
-.class-box{
-  background:rgba(255,255,255,0.06);
-  border-radius:16px;
-  padding:10px;
-  margin-bottom:10px;
+/* TIMELINE */
+
+.timeline{
+  position:relative;
 }
 
-.class-title{
+/* HOUR ROW */
+
+.hour-row{
+  height:80px;
+
+  border-bottom:
+  1px solid rgba(255,255,255,0.06);
+
+  position:relative;
+}
+
+.hour-label{
+  position:absolute;
+
+  left:12px;
+  top:10px;
+
+  font-size:0.75rem;
+
+  color:rgba(255,255,255,0.4);
+
   font-weight:700;
-  margin-bottom:5px;
 }
 
-.assignment{
-  padding:8px;
-  border-radius:12px;
-  background:rgba(255,255,255,0.05);
-  margin-top:6px;
-  font-size:0.9rem;
+.hour-line{
+  position:absolute;
+
+  left:70px;
+  right:0;
+  top:40px;
+
+  height:1px;
+
+  background:
+  rgba(255,255,255,0.05);
 }
 
-.test{
-  border-left:4px solid #ef4444;
-}
+/* EVENTS */
 
-.hw{
-  border-left:4px solid #3b82f6;
-}
+.event{
+  position:absolute;
 
-.study{
-  border-left:4px solid #10b981;
-}
+  left:80px;
+  right:12px;
 
-.today{
-  border:2px solid #8b5cf6;
-}
+  border-radius:18px;
 
-.period{
-  font-size:0.8rem;
-  color:var(--muted);
-}
-
-.schedule-box{
-  margin-top:8px;
-  background:linear-gradient(90deg,#2563eb,#7c3aed);
   padding:10px;
-  border-radius:14px;
+
+  overflow:hidden;
+
+  border:
+  1px solid rgba(255,255,255,0.08);
+
+  box-shadow:
+  0 8px 25px rgba(0,0,0,0.25);
+}
+
+.class-event{
+  background:
+  linear-gradient(
+    135deg,
+    rgba(59,130,246,0.9),
+    rgba(99,102,241,0.9)
+  );
+}
+
+.homework-event{
+  background:
+  linear-gradient(
+    135deg,
+    rgba(16,185,129,0.9),
+    rgba(5,150,105,0.9)
+  );
+}
+
+.test-event{
+  background:
+  linear-gradient(
+    135deg,
+    rgba(239,68,68,0.92),
+    rgba(220,38,38,0.92)
+  );
+}
+
+.busy-event{
+  background:
+  linear-gradient(
+    135deg,
+    rgba(245,158,11,0.92),
+    rgba(217,119,6,0.92)
+  );
+}
+
+.event-title{
+  font-weight:700;
   font-size:0.9rem;
 }
 
-.setup-overlay{
+.event-sub{
+  font-size:0.72rem;
+  opacity:0.85;
+  margin-top:4px;
+}
+
+/* SETUP */
+
+.setup{
   position:fixed;
+
   inset:0;
+
   background:#020617;
-  z-index:999;
+
+  z-index:9999;
+
   overflow:auto;
+
   padding:40px;
 }
 
@@ -192,14 +403,14 @@ button:hover{
   display:none;
 }
 
-@media(max-width:1200px){
+@media(max-width:1100px){
 
-  .layout{
+  .main{
     grid-template-columns:1fr;
   }
 
-  .week-grid{
-    grid-template-columns:1fr;
+  .sidebar{
+    height:auto;
   }
 }
 
@@ -207,83 +418,96 @@ button:hover{
 </head>
 <body>
 
-<div id="setupOverlay" class="setup-overlay hidden">
+<!-- SETUP -->
 
-  <h1>Setup Your Schedule</h1>
-  <div class="subtitle" style="margin-bottom:25px;">
+<div class="setup hidden" id="setup">
+
+  <h1 style="margin-bottom:10px;">
+    Setup Your Schedule
+  </h1>
+
+  <div class="subtitle" style="margin-bottom:30px;">
     Configure your A Day and B Day classes.
   </div>
 
   <div class="setup-grid">
 
     <div class="card">
-      <div class="section">A Day</div>
 
-      <label>Period 1-2</label>
+      <div class="section-title">
+        A Day
+      </div>
+
       <select id="a1"></select>
-
-      <label>Period 3-4</label>
       <select id="a2"></select>
-
-      <label>Period 7-8</label>
       <select id="a3"></select>
-
-      <label>Period 9-10</label>
       <select id="a4"></select>
+
     </div>
 
     <div class="card">
-      <div class="section">B Day</div>
 
-      <label>Period 1-2</label>
+      <div class="section-title">
+        B Day
+      </div>
+
       <select id="b1"></select>
-
-      <label>Period 3-4</label>
       <select id="b2"></select>
-
-      <label>Period 7-8</label>
       <select id="b3"></select>
-
-      <label>Period 9-10</label>
       <select id="b4"></select>
+
     </div>
 
   </div>
 
   <div style="margin-top:20px;">
-    <button onclick="saveSchedule()">Finish Setup</button>
+    <button onclick="saveSchedule()">
+      Finish Setup
+    </button>
   </div>
 
 </div>
 
-<div class="top">
+<!-- TOP -->
+
+<div class="topbar">
 
   <div>
-    <h1>StudyFlow</h1>
-    <div class="subtitle">
-      Smart AI Homework Organizer
+
+    <div class="logo">
+      StudyFlow
     </div>
+
+    <div class="subtitle">
+      AI Homework Planner
+    </div>
+
   </div>
 
-  <div id="todayText"></div>
+  <div class="today" id="todayText"></div>
 
 </div>
 
-<div class="layout">
+<!-- MAIN -->
 
-  <!-- LEFT -->
+<div class="main">
 
-  <div>
+  <!-- SIDEBAR -->
+
+  <div class="sidebar">
 
     <div class="card">
 
-      <div class="section">Quick Add Assignment</div>
+      <div class="section-title">
+        Add Assignment
+      </div>
 
-      <input id="title" placeholder="Assignment Title">
+      <input
+        id="title"
+        placeholder="Assignment Title"
+      >
 
-      <select id="class">
-
-      </select>
+      <select id="class"></select>
 
       <select id="type">
         <option>Homework</option>
@@ -295,13 +519,21 @@ button:hover{
         <option>Other</option>
       </select>
 
-      <label>Assigned Date</label>
-      <input type="date" id="assigned">
+      <input
+        type="date"
+        id="assigned"
+      >
 
-      <label>Due Date</label>
-      <input type="date" id="due">
+      <input
+        type="date"
+        id="due"
+      >
 
-      <input type="number" id="hours" placeholder="Estimated Hours">
+      <input
+        type="number"
+        id="hours"
+        placeholder="Estimated Hours"
+      >
 
       <button onclick="addAssignment()">
         Add Assignment
@@ -309,11 +541,16 @@ button:hover{
 
     </div>
 
-    <div class="card" style="margin-top:20px;">
+    <div class="card">
 
-      <div class="section">Busy Schedule</div>
+      <div class="section-title">
+        Add Busy Time
+      </div>
 
-      <input id="busyTitle" placeholder="Activity">
+      <input
+        id="busyTitle"
+        placeholder="Activity"
+      >
 
       <select id="repeat">
         <option>One Time</option>
@@ -322,11 +559,15 @@ button:hover{
         <option>Monthly</option>
       </select>
 
-      <label>Start</label>
-      <input type="datetime-local" id="busyStart">
+      <input
+        type="datetime-local"
+        id="busyStart"
+      >
 
-      <label>End</label>
-      <input type="datetime-local" id="busyEnd">
+      <input
+        type="datetime-local"
+        id="busyEnd"
+      >
 
       <button onclick="addBusy()">
         Add Busy Time
@@ -336,19 +577,11 @@ button:hover{
 
   </div>
 
-  <!-- RIGHT -->
+  <!-- WEEK -->
 
-  <div>
+  <div class="week-container">
 
-    <div class="card">
-
-      <div class="section">
-        Weekly Planner
-      </div>
-
-      <div class="week-grid" id="weekGrid">
-
-      </div>
+    <div class="week-grid" id="weekGrid">
 
     </div>
 
@@ -371,34 +604,6 @@ const classes = [
   "Other"
 ];
 
-const periods = [
-  {
-    name:"1-2",
-    time:"8:00 - 9:23"
-  },
-  {
-    name:"3-4",
-    time:"9:23 - 10:50"
-  },
-  {
-    name:"7-8",
-    time:"12:00 - 1:23"
-  },
-  {
-    name:"9-10",
-    time:"1:23 - 2:50"
-  }
-];
-
-let assignments =
-JSON.parse(localStorage.getItem("assignments")) || [];
-
-let busy =
-JSON.parse(localStorage.getItem("busy")) || [];
-
-let schedule =
-JSON.parse(localStorage.getItem("schedule"));
-
 const classSelect =
 document.getElementById("class");
 
@@ -410,33 +615,43 @@ classes.forEach(c=>{
 
 });
 
-function fillSetup(){
+[
+"a1","a2","a3","a4",
+"b1","b2","b3","b4"
+].forEach(id=>{
 
-  [
-    "a1","a2","a3","a4",
-    "b1","b2","b3","b4"
-  ].forEach(id=>{
+  const el =
+  document.getElementById(id);
 
-    const el = document.getElementById(id);
+  classes.forEach(c=>{
 
-    classes.forEach(c=>{
-
-      el.innerHTML += `
-        <option>${c}</option>
-      `;
-
-    });
+    el.innerHTML += `
+      <option>${c}</option>
+    `;
 
   });
 
-}
+});
 
-fillSetup();
+let assignments =
+JSON.parse(
+localStorage.getItem("assignments")
+) || [];
+
+let busy =
+JSON.parse(
+localStorage.getItem("busy")
+) || [];
+
+let schedule =
+JSON.parse(
+localStorage.getItem("schedule")
+);
 
 if(!schedule){
 
   document
-  .getElementById("setupOverlay")
+  .getElementById("setup")
   .classList.remove("hidden");
 
 }
@@ -466,7 +681,7 @@ function saveSchedule(){
   );
 
   document
-  .getElementById("setupOverlay")
+  .getElementById("setup")
   .classList.add("hidden");
 
   renderWeek();
@@ -476,8 +691,6 @@ function saveSchedule(){
 function addAssignment(){
 
   assignments.push({
-
-    id:Date.now(),
 
     title:title.value,
 
@@ -522,6 +735,8 @@ function addBusy(){
     JSON.stringify(busy)
   );
 
+  renderWeek();
+
 }
 
 function getSchoolDayIndex(date){
@@ -531,10 +746,10 @@ function getSchoolDayIndex(date){
 
   start.setHours(0,0,0,0);
 
+  let count = 0;
+
   let current =
   new Date(start);
-
-  let count = 0;
 
   while(current < date){
 
@@ -542,10 +757,10 @@ function getSchoolDayIndex(date){
       current.getDate()+1
     );
 
-    const day =
-    current.getDay();
-
-    if(day !== 0 && day !== 6){
+    if(
+      current.getDay() !== 0 &&
+      current.getDay() !== 6
+    ){
 
       count++;
 
@@ -558,12 +773,36 @@ function getSchoolDayIndex(date){
 
 function getABDay(date){
 
-  const count =
-  getSchoolDayIndex(date);
-
-  return count % 2 === 0 ? "A" : "B";
+  return
+  getSchoolDayIndex(date)%2===0
+  ? "A"
+  : "B";
 
 }
+
+const classTimes = [
+
+  {
+    start:8,
+    end:9.38
+  },
+
+  {
+    start:9.38,
+    end:10.83
+  },
+
+  {
+    start:12,
+    end:13.38
+  },
+
+  {
+    start:13.38,
+    end:14.83
+  }
+
+];
 
 function renderWeek(){
 
@@ -572,170 +811,190 @@ function renderWeek(){
 
   grid.innerHTML = "";
 
-  let current =
+  let monday =
   new Date();
 
-  while(
-    current.getDay() !== 1
-  ){
+  while(monday.getDay() !== 1){
 
-    current.setDate(
-      current.getDate()-1
+    monday.setDate(
+      monday.getDate()-1
     );
 
   }
 
   for(let i=0;i<5;i++){
 
-    const day =
-    new Date(current);
+    const date =
+    new Date(monday);
 
-    day.setDate(
-      current.getDate()+i
+    date.setDate(
+      monday.getDate()+i
     );
 
     const ab =
-    getABDay(day);
+    getABDay(date);
 
-    const classesToday =
-    schedule
-    ? schedule[ab]
-    : [];
-
-    const dayDiv =
+    const day =
     document.createElement("div");
 
-    dayDiv.className = "day";
-
-    const today =
-    new Date();
+    day.className = "day";
 
     if(
-      day.toDateString() ===
-      today.toDateString()
+      date.toDateString() ===
+      new Date().toDateString()
     ){
 
-      dayDiv.classList.add("today");
+      day.classList.add(
+        "today-day"
+      );
 
     }
 
-    dayDiv.innerHTML += `
+    day.innerHTML = `
 
       <div class="day-header">
 
         <div class="day-name">
-          ${day.toLocaleDateString(
+          ${date.toLocaleDateString(
             "en-US",
             {weekday:"long"}
           )}
         </div>
 
-        <div class="ab">
+        <div class="ab-day">
           ${ab} Day
         </div>
 
       </div>
 
+      <div class="timeline">
+
+      </div>
+
     `;
 
-    classesToday.forEach((cls,index)=>{
+    grid.appendChild(day);
 
-      const p =
-      periods[index];
+    const timeline =
+    day.querySelector(".timeline");
 
-      const classBox =
+    /* HOURS */
+
+    for(let h=8; h<=24; h++){
+
+      const row =
       document.createElement("div");
 
-      classBox.className =
-      "class-box";
+      row.className = "hour-row";
 
-      classBox.innerHTML = `
+      const label =
+      h===24
+      ? "12 AM"
+      : h>12
+      ? `${h-12} PM`
+      : `${h} AM`;
 
-        <div class="class-title">
+      row.innerHTML = `
+
+        <div class="hour-label">
+          ${label}
+        </div>
+
+        <div class="hour-line"></div>
+
+      `;
+
+      timeline.appendChild(row);
+
+    }
+
+    /* CLASSES */
+
+    schedule[ab]
+    .forEach((cls,index)=>{
+
+      const t =
+      classTimes[index];
+
+      const block =
+      document.createElement("div");
+
+      block.className =
+      "event class-event";
+
+      block.style.top =
+      `${(t.start-8)*80}px`;
+
+      block.style.height =
+      `${(t.end-t.start)*80}px`;
+
+      block.innerHTML = `
+
+        <div class="event-title">
           ${cls}
         </div>
 
-        <div class="period">
-          Period ${p.name}
-          • ${p.time}
+        <div class="event-sub">
+          Class Block
         </div>
 
       `;
 
-      assignments
-      .filter(a=>{
+      timeline.appendChild(block);
 
-        return (
-          a.className === cls &&
-          a.due ===
-          day.toISOString()
-          .split("T")[0]
-        );
+    });
 
-      })
-      .forEach(a=>{
+    /* ASSIGNMENTS */
 
-        classBox.innerHTML += `
+    assignments.forEach(a=>{
 
-          <div class="
-            assignment
-            ${a.type==="Test"
-              ?"test"
-              :"hw"}
-          ">
+      if(
+        a.due ===
+        date
+        .toISOString()
+        .split("T")[0]
+      ){
 
+        const hw =
+        document.createElement("div");
+
+        let typeClass =
+        "homework-event";
+
+        if(
+          a.type==="Test" ||
+          a.type==="Quiz"
+        ){
+
+          typeClass =
+          "test-event";
+
+        }
+
+        hw.className =
+        `event ${typeClass}`;
+
+        hw.style.top = "620px";
+        hw.style.height = "75px";
+
+        hw.innerHTML = `
+
+          <div class="event-title">
             ${a.title}
-            <br>
+          </div>
 
-            <span style="
-              font-size:0.8rem;
-              opacity:0.7;
-            ">
-              ${a.type}
-            </span>
-
+          <div class="event-sub">
+            ${a.className}
+            • ${a.type}
           </div>
 
         `;
 
-      });
+        timeline.appendChild(hw);
 
-      dayDiv.appendChild(
-        classBox
-      );
+      }
 
     });
-
-    const study =
-    assignments.filter(a=>{
-
-      return (
-        a.type === "Studying" &&
-        a.due ===
-        day.toISOString()
-        .split("T")[0]
-      );
-
-    });
-
-    if(study.length){
-
-      const s =
-      document.createElement("div");
-
-      s.className =
-      "schedule-box";
-
-      s.innerHTML = `
-        Suggested Study:
-        ${study[0].title}
-      `;
-
-      dayDiv.appendChild(s);
-
-    }
-
-    grid.appendChild(dayDiv);
 
   }
 
@@ -744,18 +1003,24 @@ function renderWeek(){
 document
 .getElementById("todayText")
 .innerHTML = `
+
   ${new Date()
-    .toLocaleDateString(
-      "en-US",
-      {
-        weekday:"long",
-        month:"long",
-        day:"numeric"
-      }
-    )}
+  .toLocaleDateString(
+    "en-US",
+    {
+      weekday:"long",
+      month:"long",
+      day:"numeric"
+    }
+  )}
+
 `;
 
-renderWeek();
+if(schedule){
+
+  renderWeek();
+
+}
 
 </script>
 
