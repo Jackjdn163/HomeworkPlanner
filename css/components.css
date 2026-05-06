@@ -1,1 +1,35 @@
+.card{
+  background:var(--card);
+  border:1px solid rgba(255,255,255,0.08);
+  border-radius:24px;
+  padding:20px;
+  margin-bottom:20px;
+}
 
+.section-title{
+  font-size:1.1rem;
+  font-weight:700;
+  margin-bottom:16px;
+}
+
+input,
+select{
+  width:100%;
+  padding:14px;
+  border:none;
+  border-radius:16px;
+  margin-bottom:12px;
+  background:rgba(255,255,255,0.08);
+  color:white;
+}
+
+button{
+  width:100%;
+  border:none;
+  padding:14px;
+  border-radius:16px;
+  background:linear-gradient(90deg,#3b82f6,#8b5cf6);
+  color:white;
+  font-weight:700;
+  cursor:pointer;
+}
