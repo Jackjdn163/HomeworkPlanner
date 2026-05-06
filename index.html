@@ -1,5 +1,147 @@
 <!DOCTYPE html>
-      <select id="type" onchange="updateDateFields()">
+<html lang="en">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>StudyFlow AI Planner</title>
+
+<!-- CSS FILES -->
+
+<link rel="stylesheet" href="css/main.css">
+<link rel="stylesheet" href="css/layout.css">
+<link rel="stylesheet" href="css/timeline.css">
+<link rel="stylesheet" href="css/components.css">
+
+</head>
+
+<body>
+
+<!-- SETUP OVERLAY -->
+
+<div class="setup hidden" id="setup">
+
+  <h1 style="margin-bottom:10px;">
+    Setup Your Schedule
+  </h1>
+
+  <div class="subtitle" style="margin-bottom:30px;">
+    Configure your A Day and B Day classes.
+  </div>
+
+  <div class="setup-grid">
+
+    <!-- A DAY -->
+
+    <div class="card">
+
+      <div class="section-title">
+        A Day
+      </div>
+
+      <label>Period 1-2</label>
+      <select id="a1"></select>
+
+      <label>Period 3-4</label>
+      <select id="a2"></select>
+
+      <label>Period 7-8</label>
+      <select id="a3"></select>
+
+      <label>Period 9-10</label>
+      <select id="a4"></select>
+
+    </div>
+
+    <!-- B DAY -->
+
+    <div class="card">
+
+      <div class="section-title">
+        B Day
+      </div>
+
+      <label>Period 1-2</label>
+      <select id="b1"></select>
+
+      <label>Period 3-4</label>
+      <select id="b2"></select>
+
+      <label>Period 7-8</label>
+      <select id="b3"></select>
+
+      <label>Period 9-10</label>
+      <select id="b4"></select>
+
+    </div>
+
+  </div>
+
+  <div style="margin-top:20px;">
+
+    <button onclick="saveSchedule()">
+      Finish Setup
+    </button>
+
+  </div>
+
+</div>
+
+<!-- TOPBAR -->
+
+<div class="topbar">
+
+  <div>
+
+    <div class="logo">
+      StudyFlow
+    </div>
+
+    <div class="subtitle">
+      AI Homework Planner
+    </div>
+
+  </div>
+
+  <div class="today" id="todayText"></div>
+
+</div>
+
+<!-- MAJOR ASSIGNMENT -->
+
+<div id="majorAssignmentBanner"></div>
+
+<!-- MAIN -->
+
+<div class="main">
+
+  <!-- SIDEBAR -->
+
+  <div class="sidebar">
+
+    <!-- AI PANEL AUTO INJECTS HERE -->
+
+    <!-- ASSIGNMENTS -->
+
+    <div class="card">
+
+      <div class="section-title">
+        Add Assignment
+      </div>
+
+      <input
+        id="title"
+        placeholder="Assignment Title"
+      >
+
+      <select id="class"></select>
+
+      <select
+        id="type"
+        onchange="updateDateFields()"
+      >
+
         <option>Homework</option>
         <option>Project</option>
         <option>Essay</option>
@@ -7,52 +149,106 @@
         <option>Test</option>
         <option>Studying</option>
         <option>Other</option>
+
       </select>
 
       <div id="assignedWrapper">
+
         <label>Assigned Date</label>
-        <input type="date" id="assigned" />
+
+        <input
+          type="date"
+          id="assigned"
+        >
+
       </div>
 
       <label>Due Date</label>
-      <input type="date" id="due" />
 
-      <input type="number" id="hours" placeholder="Estimated Hours" />
+      <input
+        type="date"
+        id="due"
+      >
 
-      <button onclick="addAssignment()">Add Assignment</button>
+      <input
+        type="number"
+        id="hours"
+        placeholder="Estimated Hours"
+      >
+
+      <button onclick="addAssignment()">
+        Add Assignment
+      </button>
+
     </div>
 
-    <div class="card">
-      <div class="section-title">Add Busy Time</div>
+    <!-- BUSY TIMES -->
 
-      <input id="busyTitle" placeholder="Activity" />
+    <div class="card">
+
+      <div class="section-title">
+        Add Busy Time
+      </div>
+
+      <input
+        id="busyTitle"
+        placeholder="Activity"
+      >
 
       <select id="repeat">
+
         <option>One Time</option>
         <option>Daily</option>
         <option>Weekly</option>
         <option>Monthly</option>
+
       </select>
 
       <label>Day</label>
-      <input type="date" id="busyDate" />
+
+      <input
+        type="date"
+        id="busyDate"
+      >
 
       <label>Start Time</label>
-      <input type="time" id="busyStart" />
+
+      <input
+        type="time"
+        id="busyStart"
+      >
 
       <label>End Time</label>
-      <input type="time" id="busyEnd" />
 
-      <button onclick="addBusy()">Add Busy Time</button>
+      <input
+        type="time"
+        id="busyEnd"
+      >
+
+      <button onclick="addBusy()">
+        Add Busy Time
+      </button>
+
     </div>
 
   </div>
 
+  <!-- WEEK VIEW -->
+
   <div class="week-container">
-    <div class="week-grid" id="weekGrid"></div>
+
+    <div
+      class="week-grid"
+      id="weekGrid"
+    >
+
+    </div>
+
   </div>
 
 </div>
+
+<!-- JAVASCRIPT -->
 
 <script src="js/storage.js"></script>
 <script src="js/schedule.js"></script>
