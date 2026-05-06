@@ -1,1 +1,49 @@
+.day{
+  background:rgba(255,255,255,0.05);
+  border-radius:24px;
+  overflow-y:auto;
+  height:calc(100vh - 240px);
+  border:1px solid rgba(255,255,255,0.08);
+  position:relative;
+}
 
+.timeline{
+  position:relative;
+}
+
+.hour-row{
+  height:80px;
+  border-bottom:1px solid rgba(255,255,255,0.06);
+  position:relative;
+}
+
+.hour-label{
+  position:absolute;
+  left:12px;
+  top:10px;
+  font-size:0.75rem;
+}
+
+.event{
+  position:absolute;
+  left:80px;
+  right:12px;
+  border-radius:18px;
+  padding:10px;
+}
+
+.class-event{
+  background:linear-gradient(135deg,#3b82f6,#6366f1);
+}
+
+.homework-event{
+  background:linear-gradient(135deg,#10b981,#059669);
+}
+
+.test-event{
+  background:linear-gradient(135deg,#ef4444,#dc2626);
+}
+
+.busy-event{
+  background:linear-gradient(135deg,#f59e0b,#d97706);
+}
