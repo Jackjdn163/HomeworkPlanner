@@ -129,7 +129,7 @@ function getABDay(date){
 }
 
 function hourToPixels(hour){
-  return (hour - 8) * 80;
+  return (hour - 8) * 72;
 }
 
 function formatHourLabel(hour){
