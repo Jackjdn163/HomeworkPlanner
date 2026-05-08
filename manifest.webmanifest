@@ -1,0 +1,16 @@
+{
+  "name": "HomeworkPlanner AI",
+  "short_name": "HomeworkPlanner",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "description": "An AI-assisted homework planner for A/B day schedules, study blocks, analytics, and cross-device planning.",
+  "icons": [
+    {
+      "src": "assets/logos/logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

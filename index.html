@@ -3,177 +3,360 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <title>StudyFlow AI Planner</title>
-
-  <link rel="stylesheet" href="css/main.css" />
-  <link rel="stylesheet" href="css/layout.css" />
-  <link rel="stylesheet" href="css/timeline.css" />
-  <link rel="stylesheet" href="css/components.css" />
+  <meta name="theme-color" content="#0f172a" />
+  <title>HomeworkPlanner AI</title>
+  <link rel="manifest" href="manifest.webmanifest?v=20260508-visualfix" />
+  <link rel="stylesheet" href="css/main.css?v=20260508-visualfix" />
+  <link rel="stylesheet" href="css/layout.css?v=20260508-visualfix" />
+  <link rel="stylesheet" href="css/timeline.css?v=20260508-visualfix" />
+  <link rel="stylesheet" href="css/components.css?v=20260508-visualfix" />
 </head>
-
 <body>
-
-  <!-- SETUP OVERLAY -->
   <div class="setup hidden" id="setup">
     <div class="setup-inner">
-      <h1>Setup Your Schedule</h1>
+      <h1>Build Your A/B Rotation</h1>
       <p class="subtitle">
-        Choose your A Day and B Day classes. Today starts as an A Day, and school days alternate while weekends are skipped.
+        HomeworkPlanner already knows your school day runs from 8:00 AM to 3:30 PM,
+        with lunch from 11:00 AM to 12:00 PM and a bus ride from 2:50 PM to 3:30 PM.
+        Add the classes that belong in each of your four daily periods and choose a
+        known A Day to anchor the rotation.
       </p>
+
+      <div class="setup-meta card">
+        <div class="section-title">Rotation Anchor</div>
+        <label for="anchorADay">Known A Day</label>
+        <input id="anchorADay" type="date" />
+        <p class="helper-copy">
+          The planner alternates A and B days across school days and automatically skips weekends.
+        </p>
+      </div>
 
       <div class="setup-grid">
         <div class="card">
           <div class="section-title">A Day</div>
 
-          <label>Period 1-2 · 8:00 - 9:23</label>
-          <select id="a1"></select>
+          <label for="a1">Period 1 · 8:00 - 9:23</label>
+          <input id="a1" placeholder="Example: Algebra II" />
 
-          <label>Period 3-4 · 9:23 - 10:50</label>
-          <select id="a2"></select>
+          <label for="a2">Period 2 · 9:23 - 11:00</label>
+          <input id="a2" placeholder="Example: English" />
 
-          <label>Period 7-8 · 12:00 - 1:23</label>
-          <select id="a3"></select>
+          <label for="a3">Period 3 · 12:00 - 1:23</label>
+          <input id="a3" placeholder="Example: Biology" />
 
-          <label>Period 9-10 · 1:23 - 2:50</label>
-          <select id="a4"></select>
+          <label for="a4">Period 4 · 1:23 - 2:50</label>
+          <input id="a4" placeholder="Example: History" />
         </div>
 
         <div class="card">
           <div class="section-title">B Day</div>
 
-          <label>Period 1-2 · 8:00 - 9:23</label>
-          <select id="b1"></select>
+          <label for="b1">Period 1 · 8:00 - 9:23</label>
+          <input id="b1" placeholder="Example: Spanish" />
 
-          <label>Period 3-4 · 9:23 - 10:50</label>
-          <select id="b2"></select>
+          <label for="b2">Period 2 · 9:23 - 11:00</label>
+          <input id="b2" placeholder="Example: Chemistry" />
 
-          <label>Period 7-8 · 12:00 - 1:23</label>
-          <select id="b3"></select>
+          <label for="b3">Period 3 · 12:00 - 1:23</label>
+          <input id="b3" placeholder="Example: Art" />
 
-          <label>Period 9-10 · 1:23 - 2:50</label>
-          <select id="b4"></select>
+          <label for="b4">Period 4 · 1:23 - 2:50</label>
+          <input id="b4" placeholder="Example: Health" />
         </div>
       </div>
 
       <button onclick="saveSchedule()" class="setup-button">
-        Finish Setup
+        Save My Schedule
       </button>
     </div>
   </div>
 
-  <!-- TOPBAR -->
+  <div id="settingsDrawer" class="overlay-shell hidden" aria-hidden="true">
+    <button class="overlay-backdrop" onclick="closeSettingsDrawer()" aria-label="Close settings"></button>
+    <aside class="side-drawer">
+      <div class="drawer-header">
+        <div>
+          <div class="section-title">Settings</div>
+          <p class="helper-copy">Manage your account, sync, and planner preferences.</p>
+        </div>
+        <button class="small-button ghost" onclick="closeSettingsDrawer()">Close</button>
+      </div>
+
+      <div id="settingsDrawerContent" class="drawer-content">
+        <div id="accountPanel"></div>
+
+        <div class="card settings-card">
+          <div class="section-title">Planner Settings</div>
+
+          <label for="breakMinutes">Break Length in Minutes</label>
+          <input id="breakMinutes" type="number" min="5" step="5" value="10" />
+
+          <label for="workMinutesBeforeBreak">Work Minutes Before a Break</label>
+          <input id="workMinutesBeforeBreak" type="number" min="15" step="5" value="60" />
+
+          <p id="plannerSettingsHint" class="helper-copy"></p>
+
+          <label for="latestStudyEnd">Latest Study End Time</label>
+          <input id="latestStudyEnd" type="time" value="22:00" />
+
+          <button onclick="savePlannerSettings()">Save Planner Settings</button>
+        </div>
+
+        <div id="plannerPlusPanels"></div>
+      </div>
+    </aside>
+  </div>
+
+  <div id="quickAddModal" class="overlay-shell hidden" aria-hidden="true">
+    <button class="overlay-backdrop" onclick="closeQuickAdd()" aria-label="Close quick add"></button>
+    <section class="dialog-panel quick-add-panel">
+      <div class="drawer-header">
+        <div>
+          <div class="section-title">Quick Add</div>
+          <p class="helper-copy">Drop in a new assignment or block out time fast.</p>
+        </div>
+        <button class="small-button ghost" onclick="closeQuickAdd()">Close</button>
+      </div>
+
+      <div class="composer-tabs">
+        <button id="tabAssignment" class="composer-tab active" onclick="openQuickAdd('assignment')">Assignment</button>
+        <button id="tabBusy" class="composer-tab" onclick="openQuickAdd('busy')">Busy Time</button>
+        <button id="tabSmart" class="composer-tab" onclick="openQuickAdd('smart')">Smart Add</button>
+      </div>
+
+      <div id="assignmentComposer" class="composer-pane">
+        <div class="card composer-card">
+          <div class="section-title">Add Assignment</div>
+
+          <input id="title" placeholder="Assignment title" />
+
+          <label for="class">Class</label>
+          <select id="class"></select>
+
+          <label for="type">Type</label>
+          <select id="type">
+            <option>Homework</option>
+            <option>Project</option>
+            <option>Essay</option>
+            <option>Quiz</option>
+            <option>Test</option>
+            <option>Studying</option>
+            <option>Other</option>
+          </select>
+
+          <label for="priority">Priority</label>
+          <select id="priority">
+            <option>Low</option>
+            <option selected>Medium</option>
+            <option>High</option>
+            <option>Urgent</option>
+          </select>
+
+          <label for="assigned">Assigned Date</label>
+          <input type="date" id="assigned" />
+
+          <label for="due">Due Date</label>
+          <input type="date" id="due" />
+
+          <label for="hours">Estimated Hours</label>
+          <input type="number" id="hours" placeholder="Example: 1.5" min="0.25" step="0.25" />
+
+          <div class="field-grid">
+            <div>
+              <label for="gradeWeight">Grade Weight %</label>
+              <input type="number" id="gradeWeight" placeholder="Optional" min="0" max="100" step="1" />
+            </div>
+
+            <div>
+              <label for="energyLevel">Energy Level</label>
+              <select id="energyLevel">
+                <option>Low</option>
+                <option selected>Medium</option>
+                <option>High</option>
+              </select>
+            </div>
+          </div>
+
+          <label for="studyMode">Study Mode</label>
+          <select id="studyMode">
+            <option>Normal</option>
+            <option>Test Prep</option>
+            <option>Deep Work</option>
+            <option>Quick Review</option>
+          </select>
+
+          <label for="resourceUrl">Assignment URL</label>
+          <input
+            type="url"
+            id="resourceUrl"
+            placeholder="Paste the Google Classroom, Canvas, or assignment link"
+          />
+
+          <label for="attachmentInput">Attachments</label>
+          <input
+            type="file"
+            id="attachmentInput"
+            accept="image/*,.pdf"
+            multiple
+            onchange="handleAttachmentInputChange()"
+          />
+          <div id="attachmentPreview" class="attachment-preview-list"></div>
+
+          <label for="subtaskSeed">Subtasks</label>
+          <textarea
+            id="subtaskSeed"
+            rows="3"
+            placeholder="Add one checklist item per line, or leave this blank and the planner can auto-break big work into subtasks."
+          ></textarea>
+
+          <label for="notes">Notes</label>
+          <textarea id="notes" rows="3" placeholder="Optional details, chapters, rubric notes, or what you still need to finish."></textarea>
+
+          <label class="toggle-row" for="saveAsTemplate">
+            <span>Save this as a recurring homework template</span>
+            <input id="saveAsTemplate" type="checkbox" onchange="toggleTemplateFields()" />
+          </label>
+
+          <div id="templateFields" class="template-fields hidden">
+            <div class="field-grid">
+              <div>
+                <label for="templateRepeat">Template Repeat</label>
+                <select id="templateRepeat">
+                  <option>Weekly</option>
+                  <option>Weekdays</option>
+                  <option>Daily</option>
+                </select>
+              </div>
+
+              <div>
+                <label for="templateDueOffsetDays">Due Offset Days</label>
+                <input type="number" id="templateDueOffsetDays" min="0" step="1" value="0" />
+              </div>
+            </div>
+          </div>
+
+          <div class="row-actions composer-actions">
+            <button onclick="addAssignment()">Add Assignment</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="busyComposer" class="composer-pane hidden">
+        <div class="card composer-card">
+          <div class="section-title">Add Busy Time</div>
+
+          <input id="busyTitle" placeholder="Activity or commitment" />
+
+          <label for="repeat">Repeat</label>
+          <select id="repeat">
+            <option>One Time</option>
+            <option>Daily</option>
+            <option>Weekdays</option>
+            <option>Weekly</option>
+            <option>Monthly</option>
+          </select>
+
+          <label for="busyDate">Anchor Day</label>
+          <input type="date" id="busyDate" />
+
+          <label for="busyStart">Start Time</label>
+          <input type="time" id="busyStart" />
+
+          <label for="busyEnd">End Time</label>
+          <input type="time" id="busyEnd" />
+
+          <div class="row-actions composer-actions">
+            <button onclick="addBusy()">Add Busy Time</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="smartComposer" class="composer-pane hidden">
+        <div class="card composer-card">
+          <div class="section-title">Smart Add</div>
+
+          <label for="naturalLanguageInput">Natural Language Assignment</label>
+          <textarea
+            id="naturalLanguageInput"
+            rows="4"
+            placeholder="Example: Bio quiz Friday, 2 hours, high priority, worth 25%, study mode test prep"
+          ></textarea>
+
+          <div class="row-actions composer-actions">
+            <button onclick="parseNaturalLanguageAssignment()">Fill Assignment Form</button>
+          </div>
+
+          <div class="section-divider"></div>
+
+          <label for="scanPhotoInput">Scan Homework From a Photo</label>
+          <input
+            type="file"
+            id="scanPhotoInput"
+            accept="image/*"
+            onchange="previewHomeworkPhoto()"
+          />
+
+          <div id="scanPreviewWrap" class="scan-preview-wrap hidden">
+            <img id="scanPreviewImage" alt="Homework scan preview" />
+          </div>
+
+          <div class="row-actions composer-actions">
+            <button onclick="runHomeworkPhotoScan()">Scan Photo</button>
+          </div>
+
+          <label for="scanExtractedText">Extracted Text</label>
+          <textarea
+            id="scanExtractedText"
+            rows="6"
+            placeholder="The recognized text from the photo will show up here."
+          ></textarea>
+
+          <div class="row-actions composer-actions">
+            <button onclick="useScannedTextAsAssignment()">Use Scanned Text</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
   <header class="topbar">
     <div>
-      <div class="logo">StudyFlow</div>
-      <div class="subtitle">AI Homework Planner</div>
+      <div class="logo">HomeworkPlanner</div>
+      <div class="subtitle">AI assisted scheduling for classes, homework, tests, projects, and essays.</div>
     </div>
 
     <div class="top-actions">
       <button class="small-button" onclick="previousWeek()">← Previous</button>
       <button class="small-button" onclick="goToCurrentWeek()">Today</button>
       <button class="small-button" onclick="nextWeek()">Next →</button>
-      <button class="small-button ghost" onclick="resetScheduleSetup()">Reset Schedule</button>
+      <button
+        id="regenerateScheduleButton"
+        class="small-button ghost"
+        onclick="regenerateLockedStudyPlan()"
+      >
+        Regenerate Schedule
+      </button>
+      <button class="small-button ghost" onclick="resetScheduleSetup()">Edit Rotation</button>
+      <button class="small-button ghost" onclick="openSettingsDrawer()">Settings</button>
     </div>
 
     <div class="today" id="todayText"></div>
   </header>
 
-  <!-- MAJOR ASSIGNMENT -->
+  <section id="sharedModeBanner"></section>
+
   <section id="majorAssignmentBanner"></section>
 
-  <!-- MAIN -->
   <main class="main">
-
-    <!-- SIDEBAR -->
     <aside class="sidebar">
-
-      <!-- AI panel is injected here by ai.js -->
-
-      <div class="card">
-        <div class="section-title">Add Assignment</div>
-
-        <input id="title" placeholder="Assignment Title" />
-
-        <label>Class</label>
-        <select id="class"></select>
-
-        <label>Type</label>
-        <select id="type" onchange="updateDateFields()">
-          <option>Homework</option>
-          <option>Project</option>
-          <option>Essay</option>
-          <option>Quiz</option>
-          <option>Test</option>
-          <option>Studying</option>
-          <option>Other</option>
-        </select>
-
-        <div id="assignedWrapper">
-          <label>Assigned Date</label>
-          <input type="date" id="assigned" />
+      <div class="quick-actions-card">
+        <div>
+          <div class="section-title quick-actions-title">Planner Feed</div>
+          <p class="helper-copy">Keep this rail for insight, assignments, and blocked time.</p>
         </div>
-
-        <label>Due Date</label>
-        <input type="date" id="due" />
-
-        <label>Estimated Hours</label>
-        <input type="number" id="hours" placeholder="Example: 1.5" min="0.25" step="0.25" />
-
-        <button onclick="addAssignment()">Add Assignment</button>
+        <button class="mini-plus-button" onclick="openQuickAdd('assignment')" aria-label="Add item">+</button>
       </div>
 
-      <div class="card">
-        <div class="section-title">Add Busy Time</div>
-
-        <input id="busyTitle" placeholder="Activity" />
-
-        <label>Repeat</label>
-        <select id="repeat">
-          <option>One Time</option>
-          <option>Daily</option>
-          <option>Weekly</option>
-          <option>Monthly</option>
-        </select>
-
-        <label>Day</label>
-        <input type="date" id="busyDate" />
-
-        <label>Start Time</label>
-        <input type="time" id="busyStart" />
-
-        <label>End Time</label>
-        <input type="time" id="busyEnd" />
-
-        <button onclick="addBusy()">Add Busy Time</button>
-      </div>
-      
-<div class="card">
-  <div class="section-title">Planner Settings</div>
-
-  <label>Break Length</label>
-  <input
-    type="number"
-    id="breakMinutes"
-    min="1"
-    value="10"
-    placeholder="Break minutes"
-  >
-
-  <label>After This Many Hours of Work</label>
-  <input
-    type="number"
-    id="workHoursBeforeBreak"
-    min="0.25"
-    step="0.25"
-    value="1"
-    placeholder="Hours of work"
-  >
-
-  <button onclick="savePlannerSettings()">
-    Save Planner Settings
-  </button>
-</div>
       <div class="card">
         <div class="section-title">Your Assignments</div>
         <div id="assignmentList"></div>
@@ -183,25 +366,36 @@
         <div class="section-title">Busy Times</div>
         <div id="busyList"></div>
       </div>
-
     </aside>
 
-    <!-- WEEK VIEW -->
     <section class="week-container">
       <div class="week-title" id="weekTitle"></div>
       <div class="week-grid" id="weekGrid"></div>
     </section>
-
   </main>
 
-  <script src="js/storage.js"></script>
-  <script src="js/schedule.js"></script>
-  <script src="js/assignments.js"></script>
-  <script src="js/busy.js"></script>
-  <script src="js/rendering.js"></script>
-  <script src="js/calendar.js"></script>
-  <script src="js/ai.js"></script>
-  <script src="js/app.js"></script>
+  <button id="floatingAddButton" class="floating-add-button" onclick="toggleQuickAddMenu()" aria-label="Add planner item">
+    +
+  </button>
 
+  <div id="floatingAddMenu" class="floating-add-menu hidden">
+    <button class="floating-menu-item" onclick="openQuickAdd('assignment')">+ Assignment</button>
+    <button class="floating-menu-item" onclick="openQuickAdd('busy')">+ Busy Time</button>
+    <button class="floating-menu-item" onclick="openQuickAdd('smart')">+ Smart Add</button>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <script src="js/storage.js?v=20260508-visualfix"></script>
+  <script src="js/schedule.js?v=20260508-visualfix"></script>
+  <script src="js/planner-plus.js?v=20260508-visualfix"></script>
+  <script src="js/assignments.js?v=20260508-visualfix"></script>
+  <script src="js/busy.js?v=20260508-visualfix"></script>
+  <script src="js/rendering.js?v=20260508-visualfix"></script>
+  <script src="js/calendar.js?v=20260508-visualfix"></script>
+  <script src="js/ai.js?v=20260508-visualfix"></script>
+  <script src="vendor/supabase.js?v=20260508-visualfix"></script>
+  <script src="supabase-config.js?v=20260508-visualfix"></script>
+  <script src="js/auth.js?v=20260508-visualfix"></script>
+  <script src="js/app.js?v=20260508-visualfix"></script>
 </body>
 </html>

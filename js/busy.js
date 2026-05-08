@@ -1,6 +1,25 @@
-let busy = loadJSON("busy", []);
+let busy = normalizeBusyItems(loadJSON("busy", []));
+
+function normalizeBusyItems(items){
+  if(!Array.isArray(items)){
+    return [];
+  }
+
+  return items.map((item, index) => ({
+    id: Number(item?.id) || Date.now() + index,
+    title: String(item?.title || "").trim(),
+    repeat: String(item?.repeat || "One Time"),
+    date: item?.date || getTodayDateString(),
+    start: item?.start || "15:30",
+    end: item?.end || "16:30"
+  }));
+}
 
 function addBusy(){
+  if(isReadOnlySharedView()){
+    return;
+  }
+
   const titleInput = document.getElementById("busyTitle");
   const repeatInput = document.getElementById("repeat");
   const dateInput = document.getElementById("busyDate");
@@ -15,7 +34,7 @@ function addBusy(){
   }
 
   if(!dateInput.value){
-    alert("Please choose a day.");
+    alert("Please choose an anchor day.");
     return;
   }
 
@@ -24,18 +43,23 @@ function addBusy(){
     return;
   }
 
-  if(startInput.value >= endInput.value){
+  const busyRange = getBusyRange({
+    start: startInput.value,
+    end: endInput.value
+  });
+
+  if(!busyRange){
     alert("End time must be after start time.");
     return;
   }
 
   busy.push({
-    id:Date.now(),
-    title:title,
-    repeat:repeatInput.value,
-    date:dateInput.value,
-    start:startInput.value,
-    end:endInput.value
+    id: Date.now(),
+    title,
+    repeat: repeatInput.value,
+    date: dateInput.value,
+    start: startInput.value,
+    end: endInput.value
   });
 
   saveBusy();
@@ -44,20 +68,47 @@ function addBusy(){
   startInput.value = "";
   endInput.value = "";
 
+  if(typeof closeQuickAdd === "function"){
+    closeQuickAdd();
+  }
+
   renderAll();
 }
 
 function deleteBusy(id){
+  if(isReadOnlySharedView()){
+    return;
+  }
+
   busy = busy.filter(item => item.id !== id);
   saveBusy();
   renderAll();
+}
+
+function getBusyRange(item){
+  const start = timeToDecimal(item.start);
+  const end = timeToDecimal(item.end, {
+    midnightAs24: true,
+    referenceStart: start
+  });
+
+  if(start === null || end === null || end <= start){
+    return null;
+  }
+
+  return {
+    start,
+    end
+  };
 }
 
 function busyAppliesToDate(item, date){
   const currentDateString = formatDateLocal(date);
   const itemDate = parseLocalDate(item.date);
 
-  if(!itemDate) return false;
+  if(!itemDate){
+    return false;
+  }
 
   if(item.repeat === "One Time"){
     return item.date === currentDateString;
@@ -65,6 +116,10 @@ function busyAppliesToDate(item, date){
 
   if(item.repeat === "Daily"){
     return true;
+  }
+
+  if(item.repeat === "Weekdays"){
+    return !isWeekend(date);
   }
 
   if(item.repeat === "Weekly"){

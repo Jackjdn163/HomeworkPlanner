@@ -1,54 +1,259 @@
-let schedule = loadJSON("schedule", null);
+function refreshClassOptions(){
+  const classSelect = document.getElementById("class");
 
-function populateSelect(id, options){
-  const select = document.getElementById(id);
+  if(!classSelect){
+    return;
+  }
 
-  if(!select) return;
+  const previousValue = classSelect.value;
+  const options = getClassOptions();
 
-  select.innerHTML = "";
+  classSelect.innerHTML = options.map(option => `
+    <option value="${escapeHTML(option)}">${escapeHTML(option)}</option>
+  `).join("");
 
-  options.forEach(option => {
-    select.innerHTML += `<option value="${option}">${option}</option>`;
+  if(options.includes(previousValue)){
+    classSelect.value = previousValue;
+  }
+}
+
+function populateSetupForm(){
+  const anchorInput = document.getElementById("anchorADay");
+
+  if(anchorInput){
+    anchorInput.value = schedule.anchorADay || getTodayDateString();
+  }
+
+  ["A", "B"].forEach(dayKey => {
+    getClassEntriesForDay(dayKey).forEach((entry, index) => {
+      const input = document.getElementById(`${dayKey.toLowerCase()}${index + 1}`);
+
+      if(input){
+        input.value = entry.name;
+      }
+    });
   });
 }
 
-function populateAllDropdowns(){
-  populateSelect("class", classes);
+function populatePlannerSettings(){
+  const settings = getPlannerSettings();
+  const breakInput = document.getElementById("breakMinutes");
+  const workInput = document.getElementById("workMinutesBeforeBreak");
+  const latestStudyEndInput = document.getElementById("latestStudyEnd");
 
-  [
-    "a1","a2","a3","a4",
-    "b1","b2","b3","b4"
-  ].forEach(id => populateSelect(id, classes));
+  if(breakInput){
+    breakInput.value = settings.breakMinutes;
+  }
+
+  if(workInput){
+    workInput.value = settings.workMinutesBeforeBreak;
+  }
+
+  if(latestStudyEndInput){
+    latestStudyEndInput.value = settings.latestStudyEnd;
+  }
+
+  if(typeof renderPlannerSettingsHint === "function"){
+    renderPlannerSettingsHint();
+  }
 }
 
-function setDefaultDates(){
-  const today = formatDateLocal(new Date());
+function populateDevTimeSettings(){
+  clearDevTimeSettings();
+}
 
-  const assigned = document.getElementById("assigned");
-  const due = document.getElementById("due");
-  const busyDate = document.getElementById("busyDate");
+function setDevTimeInputsDisabled(disabled){
+  return disabled;
+}
 
-  if(assigned) assigned.value = today;
-  if(due) due.value = today;
-  if(busyDate) busyDate.value = today;
+function renderDevTimePreview(){
+  return;
+}
+
+function syncDevTimeSlider(){
+  return;
+}
+
+function syncDevTimeInput(){
+  return;
+}
+
+function toggleDevTimeTesting(){
+  clearDevTimeSettings();
+}
+
+function saveDevTimeControls(){
+  clearDevTimeSettings();
+}
+
+function resetDevTimeControls(){
+  clearDevTimeSettings();
+}
+
+function setDefaultDates(force = false){
+  const today = getTodayDateString();
+  const assignedInput = document.getElementById("assigned");
+  const dueInput = document.getElementById("due");
+  const busyDateInput = document.getElementById("busyDate");
+
+  if(assignedInput && (force || !assignedInput.value)){
+    assignedInput.value = today;
+  }
+
+  if(dueInput && (force || !dueInput.value)){
+    dueInput.value = today;
+  }
+
+  if(busyDateInput && (force || !busyDateInput.value)){
+    busyDateInput.value = today;
+  }
+}
+
+function openSettingsDrawer(){
+  const drawer = document.getElementById("settingsDrawer");
+
+  if(!drawer){
+    return;
+  }
+
+  drawer.classList.remove("hidden");
+  drawer.setAttribute("aria-hidden", "false");
+  populatePlannerSettings();
+
+  if(typeof renderPlannerPlusPanels === "function"){
+    renderPlannerPlusPanels();
+  }
+}
+
+function closeSettingsDrawer(){
+  const drawer = document.getElementById("settingsDrawer");
+
+  if(!drawer){
+    return;
+  }
+
+  drawer.classList.add("hidden");
+  drawer.setAttribute("aria-hidden", "true");
+}
+
+function openQuickAdd(mode = "assignment"){
+  if(isReadOnlySharedView()){
+    return;
+  }
+
+  const modal = document.getElementById("quickAddModal");
+  const assignmentPane = document.getElementById("assignmentComposer");
+  const busyPane = document.getElementById("busyComposer");
+  const smartPane = document.getElementById("smartComposer");
+  const assignmentTab = document.getElementById("tabAssignment");
+  const busyTab = document.getElementById("tabBusy");
+  const smartTab = document.getElementById("tabSmart");
+  const menu = document.getElementById("floatingAddMenu");
+
+  if(modal){
+    modal.classList.remove("hidden");
+    modal.setAttribute("aria-hidden", "false");
+  }
+
+  if(menu){
+    menu.classList.add("hidden");
+  }
+
+  const showAssignment = mode === "assignment";
+  const showBusy = mode === "busy";
+  const showSmart = mode === "smart";
+
+  if(assignmentPane){
+    assignmentPane.classList.toggle("hidden", !showAssignment);
+  }
+
+  if(busyPane){
+    busyPane.classList.toggle("hidden", !showBusy);
+  }
+
+  if(smartPane){
+    smartPane.classList.toggle("hidden", !showSmart);
+  }
+
+  if(assignmentTab){
+    assignmentTab.classList.toggle("active", showAssignment);
+  }
+
+  if(busyTab){
+    busyTab.classList.toggle("active", showBusy);
+  }
+
+  if(smartTab){
+    smartTab.classList.toggle("active", showSmart);
+  }
+}
+
+function closeQuickAdd(){
+  const modal = document.getElementById("quickAddModal");
+  const menu = document.getElementById("floatingAddMenu");
+
+  if(modal){
+    modal.classList.add("hidden");
+    modal.setAttribute("aria-hidden", "true");
+  }
+
+  if(menu){
+    menu.classList.add("hidden");
+  }
+}
+
+function toggleQuickAddMenu(){
+  const menu = document.getElementById("floatingAddMenu");
+
+  if(!menu){
+    return;
+  }
+
+  menu.classList.toggle("hidden");
+}
+
+function initializeSurfaceControls(){
+  document.addEventListener("keydown", event => {
+    if(event.key === "Escape"){
+      closeQuickAdd();
+      closeSettingsDrawer();
+    }
+  });
+
+  document.addEventListener("click", event => {
+    const menu = document.getElementById("floatingAddMenu");
+    const button = document.getElementById("floatingAddButton");
+
+    if(
+      menu &&
+      button &&
+      !menu.classList.contains("hidden") &&
+      !menu.contains(event.target) &&
+      !button.contains(event.target)
+    ){
+      menu.classList.add("hidden");
+    }
+  });
 }
 
 function renderTodayText(){
   const todayText = document.getElementById("todayText");
 
-  if(!todayText) return;
+  if(!todayText){
+    return;
+  }
 
-  const now = new Date();
-  const ab = getABDay(now);
+  const now = getNow();
+  const rotation = getABDay(now);
 
   todayText.innerHTML = `
-    <div>${now.toLocaleDateString("en-US",{
-      weekday:"long",
-      month:"long",
-      day:"numeric"
+    <div>${now.toLocaleDateString("en-US", {
+      weekday: "long",
+      month: "long",
+      day: "numeric"
     })}</div>
     <div style="font-size:0.82rem; opacity:0.72; margin-top:3px;">
-      ${ab} Day
+      ${rotation === "Weekend" ? "Weekend" : `${rotation} Day`}
     </div>
   `;
 }
@@ -56,40 +261,65 @@ function renderTodayText(){
 function showSetupIfNeeded(){
   const setup = document.getElementById("setup");
 
-  if(!setup) return;
+  if(!setup){
+    return;
+  }
 
-  if(!schedule){
+  if(!scheduleWasSaved){
     setup.classList.remove("hidden");
   }
 }
 
 function saveSchedule(){
-  schedule = {
-    A:[
-      document.getElementById("a1").value,
-      document.getElementById("a2").value,
-      document.getElementById("a3").value,
-      document.getElementById("a4").value
-    ],
+  if(isReadOnlySharedView()){
+    return;
+  }
 
-    B:[
-      document.getElementById("b1").value,
-      document.getElementById("b2").value,
-      document.getElementById("b3").value,
-      document.getElementById("b4").value
-    ]
+  const anchorInput = document.getElementById("anchorADay");
+  const anchorADay = anchorInput?.value || getTodayDateString();
+
+  schedule = {
+    anchorADay,
+    A: PERIOD_SLOTS.map((slot, index) => ({
+      slotId: slot.id,
+      name: document.getElementById(`a${index + 1}`)?.value.trim() || ""
+    })),
+    B: PERIOD_SLOTS.map((slot, index) => ({
+      slotId: slot.id,
+      name: document.getElementById(`b${index + 1}`)?.value.trim() || ""
+    }))
   };
 
   saveScheduleData();
+  refreshClassOptions();
 
-  document.getElementById("setup").classList.add("hidden");
+  const setup = document.getElementById("setup");
 
+  if(setup){
+    setup.classList.add("hidden");
+  }
+
+  renderTodayText();
   renderAll();
 }
 
 function resetScheduleSetup(){
+  if(isReadOnlySharedView()){
+    return;
+  }
+
   localStorage.removeItem("schedule");
-  schedule = null;
+  schedule = getDefaultSchedule();
+  scheduleWasSaved = false;
+
+  if(typeof markSmartPlanDirty === "function"){
+    markSmartPlanDirty();
+  }
+
+  populateSetupForm();
+  refreshClassOptions();
+  renderTodayText();
+  renderAll();
 
   const setup = document.getElementById("setup");
 
@@ -99,25 +329,49 @@ function resetScheduleSetup(){
 }
 
 function initializeApp(){
-  populateAllDropdowns();
-  setDefaultDates();
-  renderTodayText();
-  updateDateFields();
-  showSetupIfNeeded();
-
-  if(!schedule){
-    schedule = {
-      A:["Math","English","History","Science"],
-      B:["Theatre","Spanish","Elective","Health/Fitness"]
-    };
+  if(typeof hydrateSharedViewIfPresent === "function"){
+    hydrateSharedViewIfPresent();
   }
 
+  if(typeof initializePlannerPlus === "function"){
+    initializePlannerPlus();
+  }
+
+  if(typeof hadLegacyDevTimeOverride !== "undefined" && hadLegacyDevTimeOverride){
+    clearDevTimeSettings();
+
+    if(typeof clearLockedStudyPlan === "function"){
+      clearLockedStudyPlan();
+    }
+  }
+
+  populateSetupForm();
+  refreshClassOptions();
+  setDefaultDates();
+  populatePlannerSettings();
+
+  if(typeof ensureRecurringTemplateAssignments === "function"){
+    ensureRecurringTemplateAssignments();
+  }
+
+  renderTodayText();
+  showSetupIfNeeded();
   initializeAI();
+  initializeSurfaceControls();
   renderAll();
+
+  if(typeof initializeCloudSync === "function"){
+    void initializeCloudSync();
+  }
 
   setInterval(() => {
     renderTodayText();
     renderWeek();
+    renderAIInsights();
+
+    if(typeof runPlannerNotificationsCheck === "function"){
+      runPlannerNotificationsCheck();
+    }
   }, 60000);
 }
 

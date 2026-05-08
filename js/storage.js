@@ -14,16 +14,48 @@ function saveJSON(key, value){
 
 function saveAssignments(){
   saveJSON("assignments", assignments);
+
+  if(typeof markSmartPlanDirty === "function"){
+    markSmartPlanDirty();
+  }
+
+  if(typeof queueCloudSync === "function"){
+    queueCloudSync("assignments");
+  }
 }
 
 function saveBusy(){
   saveJSON("busy", busy);
+
+  if(typeof markSmartPlanDirty === "function"){
+    markSmartPlanDirty();
+  }
+
+  if(typeof queueCloudSync === "function"){
+    queueCloudSync("busy");
+  }
 }
 
 function saveScheduleData(){
   saveJSON("schedule", schedule);
+
+  if(typeof markSmartPlanDirty === "function"){
+    markSmartPlanDirty();
+  }
+
+  if(typeof scheduleWasSaved !== "undefined"){
+    scheduleWasSaved = true;
+  }
+
+  if(typeof queueCloudSync === "function"){
+    queueCloudSync("schedule");
+  }
 }
 
 function saveWeekOffset(){
   saveJSON("weekOffset", weekOffset);
+
+  if(typeof queueCloudSync === "function"){
+    queueCloudSync("week offset");
+  }
 }

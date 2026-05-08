@@ -19,90 +19,66 @@ function goToCurrentWeek(){
 }
 
 function getVisibleMonday(){
-  const monday = getMonday(new Date());
-
-  monday.setDate(
-    monday.getDate() + weekOffset * 7
-  );
-
+  const monday = getMonday(getNow());
+  monday.setDate(monday.getDate() + weekOffset * 7);
   return monday;
 }
 
 function renderWeek(){
-  const grid =
-    document.getElementById("weekGrid");
+  const grid = document.getElementById("weekGrid");
+  const weekTitle = document.getElementById("weekTitle");
 
-  const weekTitle =
-    document.getElementById("weekTitle");
-
-  if(!grid) return;
+  if(!grid){
+    return;
+  }
 
   grid.innerHTML = "";
 
-  const monday =
-    getVisibleMonday();
+  const monday = getVisibleMonday();
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
 
-  const friday =
-    new Date(monday);
-
-  friday.setDate(
-    monday.getDate() + 4
-  );
-
-  const smartPlan =
-    generateSmartStudyPlan();
+  const smartPlan = getActiveSmartStudyPlan();
 
   if(weekTitle){
-    weekTitle.textContent =
-      `${monday.toLocaleDateString("en-US",{month:"short",day:"numeric"})} - ${friday.toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"})}`;
+    weekTitle.textContent = `${monday.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric"
+    })} - ${sunday.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric"
+    })}`;
   }
 
-  for(let i = 0; i < 5; i++){
+  for(let i = 0; i < 7; i++){
     const date = new Date(monday);
-
-    date.setDate(
-      monday.getDate() + i
-    );
-
-    renderDayColumn(
-      date,
-      grid,
-      smartPlan
-    );
+    date.setDate(monday.getDate() + i);
+    renderDayColumn(date, grid, smartPlan);
   }
 }
 
-function renderDayColumn(date,grid,smartPlan){
-  const dateString =
-    formatDateLocal(date);
-
-  const ab =
-    getABDay(date);
-
-  const day =
-    document.createElement("div");
+function renderDayColumn(date, grid, smartPlan){
+  const dateString = formatDateLocal(date);
+  const rotation = getABDay(date);
+  const day = document.createElement("div");
 
   day.className = "day";
 
-  if(
-    date.toDateString() ===
-    new Date().toDateString()
-  ){
+  if(date.toDateString() === getNow().toDateString()){
     day.classList.add("today-day");
   }
 
   day.innerHTML = `
     <div class="day-header">
       <div class="day-name">
-        ${date.toLocaleDateString("en-US",{weekday:"long"})}
+        ${date.toLocaleDateString("en-US", { weekday: "long" })}
       </div>
-
       <div class="day-date">
-        ${date.toLocaleDateString("en-US",{month:"long",day:"numeric"})}
+        ${date.toLocaleDateString("en-US", { month: "long", day: "numeric" })}
       </div>
-
       <div class="ab-day">
-        ${ab} Day
+        ${rotation === "Weekend" ? "Weekend" : `${rotation} Day`}
       </div>
     </div>
 
@@ -111,30 +87,25 @@ function renderDayColumn(date,grid,smartPlan){
 
   grid.appendChild(day);
 
-  const timeline =
-    day.querySelector(".timeline");
+  const timeline = day.querySelector(".timeline");
 
   renderHourRows(timeline);
-  renderFlexBackgroundBlocks(timeline);
-  renderClassBlocks(timeline,ab,dateString);
-  renderBusyBlocks(timeline,date);
-  renderSmartStudyBlocks(timeline,dateString,smartPlan);
-  renderUnmatchedDueAssignments(timeline,dateString,ab);
-  renderCurrentTimeLine(timeline,date);
+  renderFlexBackgroundBlocks(timeline, date);
+  renderFixedSchoolBlocks(timeline, date);
+  renderClassBlocks(timeline, rotation, dateString);
+  renderBusyBlocks(timeline, date);
+  renderWhatIfBusyBlocks(timeline, date);
+  renderSmartStudyBlocks(timeline, dateString, smartPlan);
+  renderUnmatchedDueAssignments(timeline, dateString, rotation);
+  renderCurrentTimeLine(timeline, date);
 }
 
 function renderHourRows(timeline){
-  for(let h = 8; h <= 24; h++){
-    const row =
-      document.createElement("div");
-
+  for(let hour = SCHOOL_DAY.start; hour <= 24; hour++){
+    const row = document.createElement("div");
     row.className = "hour-row";
-
     row.innerHTML = `
-      <div class="hour-label">
-        ${formatHourLabel(h)}
-      </div>
-
+      <div class="hour-label">${formatHourLabel(hour)}</div>
       <div class="hour-line"></div>
     `;
 
@@ -142,179 +113,173 @@ function renderHourRows(timeline){
   }
 }
 
-/*
-  Background availability blocks.
-  These no longer have text so they do not interfere visually.
-*/
+function renderFlexBackgroundBlocks(timeline, date){
+  const baseWindows = getBaseStudyWindowsForDate(date);
 
-function renderFlexBackgroundBlocks(timeline){
-  const lunch =
-    createEventBlock({
-      title:"",
-      subtitle:"",
-      className:"flex-event",
-      start:10 + 50/60,
-      end:12
+  baseWindows.forEach(window => {
+    const block = createEventBlock({
+      title: window.label,
+      subtitle: `${decimalHourToTime(window.start)} - ${decimalHourToTime(window.end)}`,
+      className: window.visualClassName,
+      start: window.start,
+      end: window.end
     });
 
-  const afternoon =
-    createEventBlock({
-      title:"",
-      subtitle:"",
-      className:"flex-event",
-      start:14 + 50/60,
-      end:22
-    });
-
-  timeline.appendChild(lunch);
-  timeline.appendChild(afternoon);
+    timeline.appendChild(block);
+  });
 }
 
-function renderClassBlocks(timeline,ab,dateString){
-  const classesToday =
-    schedule?.[ab] || [];
+function renderFixedSchoolBlocks(timeline, date){
+  if(isWeekend(date)){
+    return;
+  }
 
-  classesToday.forEach((className,index) => {
-    const time =
-      classTimes[index];
+  const busRide = createEventBlock({
+    title: "Bus Ride",
+    subtitle: `${decimalHourToTime(SCHOOL_DAY.busStart)} - ${decimalHourToTime(SCHOOL_DAY.busEnd)}`,
+    className: "bus-event",
+    start: SCHOOL_DAY.busStart,
+    end: SCHOOL_DAY.busEnd
+  });
 
-    if(!time) return;
+  timeline.appendChild(busRide);
+}
 
-    const dueForThisClass =
-      assignments.filter(item =>
+function renderClassBlocks(timeline, rotation, dateString){
+  if(rotation === "Weekend"){
+    return;
+  }
+
+  const classesToday = getClassEntriesForDay(rotation);
+
+  classesToday.forEach(time => {
+    const className = getDisplayClassName(time.name);
+    const dueForThisClass = time.name
+      ? assignments.filter(item =>
         item.due === dateString &&
-        item.className === className
-      );
+        item.className === time.name
+      )
+      : [];
 
-    const dueHTML =
-      dueForThisClass.map(item => `
-        <div class="due-inside-class ${
-          item.type === "Test" ||
-          item.type === "Quiz"
-          ? "due-test"
-          : ""
-        }">
-          <strong>${item.type}:</strong>
-          ${item.title}
-        </div>
-      `).join("");
+    const dueHTML = dueForThisClass.map(item => `
+      <div class="due-inside-class ${item.type === "Test" || item.type === "Quiz" ? "due-test" : ""}">
+        <strong>${escapeHTML(item.type)}:</strong>
+        ${escapeHTML(item.title)}
+      </div>
+    `).join("");
 
-    const block =
-      createEventBlock({
-        title:className,
-        subtitle:`Period ${time.period} · ${time.label}`,
-        className:"class-event",
-        start:time.start,
-        end:time.end,
-        extraHTML:dueHTML
-      });
+    const block = createEventBlock({
+      title: className,
+      subtitle: `Period ${time.period} · ${time.label}`,
+      className: time.name ? "class-event" : "open-event",
+      start: time.start,
+      end: time.end,
+      extraHTML: `
+        ${createClassPortalLinkHTML(time.name, "Open Portal", "event-chip event-link-chip")}
+        ${dueHTML}
+      `,
+      styleValue: time.name ? getEventAccentStyle(time.name, "class") : ""
+    });
 
     timeline.appendChild(block);
   });
 }
 
-function renderBusyBlocks(timeline,date){
+function renderBusyBlocks(timeline, date){
   busy.forEach(item => {
-    if(!busyAppliesToDate(item,date)) return;
+    if(!busyAppliesToDate(item, date)){
+      return;
+    }
 
-    const start =
-      timeToDecimal(item.start);
+    const busyRange = getBusyRange(item);
 
-    const end =
-      timeToDecimal(item.end);
+    if(!busyRange){
+      return;
+    }
 
-    if(
-      start === null ||
-      end === null
-    ) return;
-
-    const block =
-      createEventBlock({
-        title:item.title,
-        subtitle:`${item.repeat} · ${item.start} - ${item.end}`,
-        className:"busy-event",
-        start:start,
-        end:end
-      });
+    const block = createEventBlock({
+      title: item.title,
+      subtitle: `${item.repeat} · ${item.start} - ${item.end}`,
+      className: "busy-event",
+      start: busyRange.start,
+      end: busyRange.end
+    });
 
     timeline.appendChild(block);
   });
 }
 
-function renderSmartStudyBlocks(timeline,dateString,smartPlan){
-  const sessions =
-    smartPlan[dateString] || [];
+function renderWhatIfBusyBlocks(timeline, date){
+  getWhatIfBlocksForDate(date).forEach(item => {
+    const range = getBusyRange(item);
+
+    if(!range){
+      return;
+    }
+
+    const block = createEventBlock({
+      title: item.title,
+      subtitle: `What-if · ${item.start} - ${item.end}`,
+      className: "what-if-event",
+      start: range.start,
+      end: range.end
+    });
+
+    timeline.appendChild(block);
+  });
+}
+
+function renderSmartStudyBlocks(timeline, dateString, smartPlan){
+  const sessions = smartPlan.sessionsByDate[dateString] || [];
 
   sessions.forEach(session => {
-    const isBreak =
-      session.kind === "break";
-
-    const durationMinutes =
-      Math.round(
-        (session.end - session.start) * 60
-      );
-
-    const timeRange =
-      `${decimalHourToTime(session.start)} - ${decimalHourToTime(session.end)}`;
-
-    const block =
-      createEventBlock({
-        title:
-          isBreak
-          ? `Break · ${durationMinutes} min`
-          : `Work on ${session.title}`,
-
-        subtitle:
-          isBreak
-          ? timeRange
-          : `${timeRange}`,
-
-        className:
-          isBreak
-          ? "break-event"
-          : "study-event",
-
-        start:session.start,
-        end:session.end,
-
-        extraHTML:
-          isBreak
-          ? ""
-          : `
-            <div class="event-chip">
-              ${durationMinutes} min · ${session.className}
-            </div>
-          `
-      });
+    const isBreak = session.kind === "break";
+    const durationMinutes = Math.round((session.end - session.start) * 60);
+    const timeRange = `${decimalHourToTime(session.start)} - ${decimalHourToTime(session.end)}`;
+    const assignment = assignments.find(item => item.id === session.assignmentId);
+    const nextSubtask = assignment ? getNextOpenSubtask(assignment) : null;
+    const block = createEventBlock({
+      title: isBreak ? `Break · ${durationMinutes} min` : `Work on ${session.title}`,
+      subtitle: isBreak ? timeRange : `${timeRange} · ${session.priority} priority · ${session.studyMode || "Normal"}`,
+      className: isBreak ? "break-event" : "study-event",
+      start: session.start,
+      end: session.end,
+      extraHTML: isBreak ? "" : `
+        <div class="event-chip">
+          ${durationMinutes} min · ${escapeHTML(session.className)}
+        </div>
+        ${nextSubtask ? `<div class="event-chip">${escapeHTML(nextSubtask.text)}</div>` : ""}
+        ${createAssignmentLinkHTML(session.resourceUrl, "Open Link", "event-chip event-link-chip")}
+        ${createClassPortalLinkHTML(session.className, "Portal", "event-chip event-link-chip")}
+      `
+      ,
+      styleValue: isBreak ? "" : getEventAccentStyle(session.className, "study")
+    });
 
     timeline.appendChild(block);
   });
 }
 
-function renderUnmatchedDueAssignments(timeline,dateString,ab){
-  const classesToday =
-    schedule?.[ab] || [];
+function renderUnmatchedDueAssignments(timeline, dateString, rotation){
+  const classesToday = rotation === "Weekend"
+    ? []
+    : getClassEntriesForDay(rotation)
+      .map(entry => entry.name)
+      .filter(Boolean);
 
-  const unmatched =
-    assignments.filter(item =>
-      item.due === dateString &&
-      !classesToday.includes(item.className)
-    );
+  const unmatched = assignments.filter(item =>
+    item.due === dateString &&
+    !item.completed &&
+    !classesToday.includes(item.className)
+  );
 
-  unmatched.forEach((item,index) => {
-    const start =
-      16.25 + index * 0.85;
+  unmatched.forEach((item, index) => {
+    const start = 16 + index * 0.8;
+    const end = start + 0.6;
 
-    const end =
-      start + 0.65;
+    let eventClass = "homework-event";
 
-    let eventClass =
-      "homework-event";
-
-    if(
-      item.type === "Test" ||
-      item.type === "Quiz"
-    ){
+    if(item.type === "Test" || item.type === "Quiz"){
       eventClass = "test-event";
     }
 
@@ -322,44 +287,35 @@ function renderUnmatchedDueAssignments(timeline,dateString,ab){
       eventClass = "study-event";
     }
 
-    const block =
-      createEventBlock({
-        title:`Due: ${item.title}`,
-        subtitle:`${item.className} · ${item.type}`,
-        className:eventClass,
-        start:start,
-        end:end
-      });
+    const block = createEventBlock({
+      title: `Due: ${item.title}`,
+      subtitle: `${item.className} · ${item.type}`,
+      className: eventClass,
+      start,
+      end,
+      styleValue: getEventAccentStyle(item.className, "due")
+    });
 
     timeline.appendChild(block);
   });
 }
 
-function renderCurrentTimeLine(timeline,date){
-  const now =
-    new Date();
+function renderCurrentTimeLine(timeline, date){
+  const now = getNow();
 
-  if(
-    date.toDateString() !==
-    now.toDateString()
-  ) return;
+  if(date.toDateString() !== now.toDateString()){
+    return;
+  }
 
-  const currentHour =
-    now.getHours() + now.getMinutes()/60;
+  const currentHour = now.getHours() + now.getMinutes() / 60;
 
-  if(
-    currentHour < 8 ||
-    currentHour > 24
-  ) return;
+  if(currentHour < SCHOOL_DAY.start || currentHour > 24){
+    return;
+  }
 
-  const line =
-    document.createElement("div");
-
-  line.className =
-    "current-time-line";
-
-  line.style.top =
-    `${hourToPixels(currentHour)}px`;
+  const line = document.createElement("div");
+  line.className = "current-time-line";
+  line.style.top = `${hourToPixels(currentHour)}px`;
 
   timeline.appendChild(line);
 }
@@ -370,52 +326,51 @@ function createEventBlock({
   className,
   start,
   end,
-  extraHTML = ""
+  extraHTML = "",
+  styleValue = ""
 }){
-  const block =
-    document.createElement("div");
+  const block = document.createElement("div");
+  const isBreak = className === "break-event";
+  const durationMinutes = Math.round((end - start) * 60);
+  const isLongBreak = isBreak && durationMinutes > 15;
+  const visualGap = isBreak ? 0 : 4;
+  const rawHeight = (end - start) * 72;
+  const isDense = !isBreak && rawHeight < 72;
+  const isTiny = !isBreak && rawHeight < 48;
+  const minHeight = isBreak
+    ? durationMinutes <= 15
+      ? 22
+      : 34
+    : 36;
+  const contentClassName = isBreak
+    ? "event-content break-content"
+    : "event-content";
+  const eventClasses = ["event", className];
 
-  const isBreak =
-    className === "break-event";
+  if(isBreak){
+    eventClasses.push(isLongBreak ? "long-break" : "compact-break");
+  }
 
-  const durationMinutes =
-    Math.round((end - start) * 60);
+  if(isDense){
+    eventClasses.push("dense-event");
+  }
 
-  const isLongBreak =
-    isBreak && durationMinutes > 15;
+  if(isTiny){
+    eventClasses.push("tiny-event");
+  }
 
-  const visualGap =
-    isBreak ? -3 : 4;
+  block.className = eventClasses.join(" ");
+  block.style.top = `${hourToPixels(start) + visualGap}px`;
+  block.style.height = `${Math.max(minHeight, rawHeight)}px`;
 
-  const rawHeight =
-    (end - start) * 72;
-
-  const minHeight =
-    isBreak
-      ? durationMinutes <= 15
-        ? 16
-        : 28
-      : 36;
-
-  block.className =
-    `event ${className} ${isLongBreak ? "long-break" : ""}`;
-
-  block.style.top =
-    `${hourToPixels(start) + visualGap}px`;
-
-  block.style.height =
-    `${Math.max(minHeight,rawHeight - 2)}px`;
+  if(styleValue){
+    block.style.cssText += styleValue;
+  }
 
   block.innerHTML = `
-    <div>
-      <div class="event-title">
-        ${title}
-      </div>
-
-      <div class="event-sub">
-        ${subtitle}
-      </div>
-
+    <div class="${contentClassName}">
+      <div class="event-title">${escapeHTML(title)}</div>
+      <div class="event-sub">${escapeHTML(subtitle)}</div>
       ${extraHTML}
     </div>
   `;
